@@ -1,0 +1,1132 @@
+<title>Registro Presenze Denny</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: officina ferroviaria — griglia mensile come un foglio turni, barra di navigazione fissa a tre voci */
+:root{
+  --bg:#EDF0F3; --surface:#FFFFFF; --surface-2:#F6F8FA; --ink:#15202B; --ink-2:#465463; --muted:#76818F;
+  --line:#D6DDE4; --accent:#1D5C96; --accent-ink:#FFFFFF; --accent-soft:#DCE8F4;
+  --good:#23794A; --warn:#A2640F; --bad:#B8362B; --today:#E0A526;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --r:10px; --nav-h:62px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0E141A; --surface:#161F28; --surface-2:#1B2631; --ink:#E5EBF1; --ink-2:#AEBAC6; --muted:#7D8997;
+  --line:#2A3643; --accent:#78AEE0; --accent-ink:#0E141A; --accent-soft:#1D3247;
+  --good:#5CC48A; --warn:#E3A54A; --bad:#EE7B70; --today:#F0BE4E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E141A; --surface:#161F28; --surface-2:#1B2631; --ink:#E5EBF1; --ink-2:#AEBAC6; --muted:#7D8997;
+  --line:#2A3643; --accent:#78AEE0; --accent-ink:#0E141A; --accent-soft:#1D3247;
+  --good:#5CC48A; --warn:#E3A54A; --bad:#EE7B70; --today:#F0BE4E; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:var(--f-body);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3{font-family:var(--f-display);font-weight:600;letter-spacing:.01em;margin:0;text-wrap:balance}
+.wrap{max-width:1100px;margin:0 auto;padding-inline:16px;padding-block:14px calc(var(--nav-h) + 28px + env(safe-area-inset-bottom,0px))}
+
+/* header */
+.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:space-between;padding-block:4px 12px}
+.brand{display:flex;align-items:baseline;gap:10px;min-width:0}
+.brand h1{font-size:26px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.brand span{color:var(--muted);font-size:13px}
+.sync{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-2);background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:4px 10px}
+.sync i{width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block}
+.sync.ok i{background:var(--good)} .sync.pending i{background:var(--warn)} .sync.err i{background:var(--bad)}
+
+/* nav */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0px)}
+nav.tabs button{flex:1;max-width:240px;height:var(--nav-h);border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12.5px;color:var(--muted);font-weight:500}
+nav.tabs button b{font-size:20px;line-height:1;font-weight:400}
+nav.tabs button[aria-current="page"]{color:var(--accent);font-weight:600}
+@media (min-width:900px){
+  nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);bottom:auto;border-top:0;border-bottom:1px solid var(--line);justify-content:flex-start;gap:4px;padding:0 max(16px,calc((100vw - 1100px)/2 + 16px))}
+  nav.tabs button{flex:0 0 auto;flex-direction:row;height:48px;gap:8px;font-size:14.5px;padding:0 14px;border-bottom:2px solid transparent}
+  nav.tabs button b{font-size:17px}
+  nav.tabs button[aria-current="page"]{border-bottom-color:var(--accent)}
+  .wrap{padding-block:18px 40px}
+}
+
+/* generic */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 12px;font-weight:500;font-size:14px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{border-color:var(--ink-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 45%,var(--line))}
+.btn.danger.solid{background:var(--bad);color:#fff;border-color:var(--bad)}
+.btn.ghost{border-color:transparent;background:transparent}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.sm{padding:5px 9px;font-size:13px}
+select,input[type=text],input[type=number],input[type=date],input[type=time],textarea{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 9px;min-width:0}
+textarea{width:100%;resize:vertical;min-height:64px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--ink-2);font-weight:500}
+.lbl{font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
+.muted{color:var(--muted)} .small{font-size:13px}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:99px;padding:2px 9px;font-size:12.5px;font-weight:500;background:color-mix(in srgb,var(--c,var(--muted)) 16%,var(--surface));color:var(--ink);border:1px solid color-mix(in srgb,var(--c,var(--muted)) 38%,transparent)}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--c,var(--muted));flex:none}
+.ok{color:var(--good)} .warn{color:var(--warn)} .bad{color:var(--bad)}
+.notice{border-radius:8px;padding:10px 12px;font-size:13.5px;background:var(--accent-soft);color:var(--ink)}
+.notice.warn{background:color-mix(in srgb,var(--warn) 14%,var(--surface))}
+.notice.bad{background:color-mix(in srgb,var(--bad) 12%,var(--surface))}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);font-size:13.5px;vertical-align:middle}
+th{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+td.n,th.n{text-align:right}
+.tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.stack{display:flex;flex-direction:column;gap:14px}
+
+/* calendar */
+.calbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.months{display:flex;gap:4px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px;scrollbar-width:thin}
+.months button{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 10px;font-size:13.5px;flex:none;color:var(--ink-2)}
+.months button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg);font-weight:600}
+.months button:disabled{opacity:.35}
+.monthhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.monthhead h2{font-size:30px;text-transform:uppercase;letter-spacing:.03em;font-weight:700}
+.monthhead h2 small{font-size:22px;color:var(--muted);font-weight:500}
+.yearstrip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.yearstrip div{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:8px 10px;min-width:0}
+.yearstrip b{display:block;font-family:var(--f-display);font-size:24px;font-weight:600;line-height:1.1}
+.yearstrip span{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+@media (max-width:560px){.yearstrip{grid-template-columns:repeat(2,minmax(0,1fr))}.brand h1{font-size:22px}.brand span{display:none}}
+.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.wd{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);text-align:center;font-weight:600;padding:2px 0}
+.day{position:relative;min-height:78px;border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:5px;text-align:left;display:flex;flex-direction:column;gap:3px;min-width:0;overflow:hidden}
+.day.coded{background:color-mix(in srgb,var(--c) 13%,var(--surface));border-color:color-mix(in srgb,var(--c) 35%,var(--line))}
+.day.auto{background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--c) 9%,var(--surface)) 0 6px,var(--surface) 6px 12px)}
+.day.out{opacity:.35;cursor:default;background:transparent;border-style:dashed}
+.day.pad{visibility:hidden}
+.day.dim{opacity:.28}
+.day .num{font-family:var(--f-display);font-size:19px;font-weight:600;line-height:1}
+.day.sun .num{color:var(--bad)}
+.day.today{box-shadow:inset 0 0 0 2px var(--today)}
+.day .code{font-size:11.5px;font-weight:600;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:4px}
+.day .det{font-size:11px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.day .tags{display:flex;gap:3px;flex-wrap:wrap;margin-top:auto}
+.tag{font-size:10px;font-weight:600;padding:1px 5px;border-radius:4px;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-2);line-height:1.3}
+.tag.pm{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tag.ot{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,var(--line))}
+@media (max-width:560px){
+  .grid{gap:3px}
+  .day{min-height:64px;padding:4px 3px}
+  .day .det{display:none}
+  .day .code{font-size:10px}
+  .day .num{font-size:16px}
+  .tag{font-size:9px;padding:0 3px}
+}
+.legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgb(10 16 22 / .45);z-index:40;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--surface);width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px;border:1px solid var(--line)}
+@media (min-width:700px){.scrim{align-items:center}.sheet{border-radius:14px}}
+.sheet h3{font-size:24px;text-transform:capitalize}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:6px 11px;font-size:13.5px;display:inline-flex;align-items:center;gap:6px}
+.chip[aria-pressed="true"]{background:color-mix(in srgb,var(--c,var(--ink)) 20%,var(--surface));border-color:var(--c,var(--ink));font-weight:600}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:420px){.two{grid-template-columns:1fr}}
+.hm{display:flex;gap:6px;align-items:center}
+.hm input[type=number]{width:64px}
+.hm{flex-wrap:wrap}
+.hm input[type=time]{width:104px;padding:6px}
+.switch{display:flex;align-items:center;gap:10px;font-weight:500;font-size:14px}
+.switch input{width:18px;height:18px;accent-color:var(--accent)}
+
+/* report */
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:700px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;min-width:0}
+.tile b{display:block;font-family:var(--f-display);font-size:34px;font-weight:600;line-height:1.05}
+.tile span{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.tile small{display:block;font-size:12.5px;color:var(--ink-2);margin-top:2px}
+.rgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:820px){.rgrid{grid-template-columns:1fr}}
+.card h2{font-size:21px;margin-bottom:10px;text-transform:uppercase;letter-spacing:.03em}
+.kv{display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-size:14px}
+.kv dt{color:var(--ink-2)} .kv dd{margin:0;font-weight:600;text-align:right}
+.chart{width:100%;height:auto;display:block}
+.chart text{fill:var(--muted);font-size:11px;font-family:var(--f-body)}
+.chart .v{fill:var(--ink);font-weight:600}
+.chart rect.b{fill:var(--accent)}
+.chart rect.b.hl,.chart rect.b:hover{fill:color-mix(in srgb,var(--accent) 70%,var(--ink))}
+.chart line{stroke:var(--line)}
+.hbar{display:grid;grid-template-columns:minmax(90px,150px) 1fr auto;gap:6px 10px;align-items:center;font-size:13.5px}
+.hbar .track{height:12px;background:var(--surface-2);border-radius:3px;overflow:hidden}
+.hbar .fill{height:100%;background:var(--c,var(--accent));border-radius:0 3px 3px 0}
+#tip{position:fixed;z-index:60;pointer-events:none;background:var(--ink);color:var(--bg);font-size:12.5px;padding:5px 8px;border-radius:6px;white-space:nowrap}
+
+/* settings */
+.set{display:grid;grid-template-columns:220px minmax(0,1fr);gap:16px;align-items:start}
+.setnav{display:flex;flex-direction:column;gap:2px;position:sticky;top:64px}
+.setnav button{border:0;background:none;text-align:left;padding:9px 12px;border-radius:8px;font-size:14.5px;color:var(--ink-2)}
+.setnav button[aria-current="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:inset 0 0 0 1px var(--line)}
+@media (max-width:820px){
+  .set{grid-template-columns:1fr}
+  .setnav{flex-direction:row;overflow-x:auto;position:static;padding-bottom:4px}
+  .setnav button{flex:none;border:1px solid var(--line);background:var(--surface)}
+  .setnav button[aria-current="true"]{background:var(--ink);color:var(--bg);box-shadow:none}
+}
+.codes td input[type=text]{width:100%;min-width:120px}
+.codes th,.codes td{padding:6px 5px}
+.codes input[type=color]{width:34px;height:30px;border:1px solid var(--line);border-radius:6px;padding:1px;background:var(--surface)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.empty{padding:30px 16px;text-align:center;color:var(--ink-2)}
+@media (prefers-reduced-motion:no-preference){.sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(12px);opacity:.6}}}
+</style>
+
+<nav class="tabs" id="tabs">
+  <button data-tab="calendario"><b>📅</b>Calendario</button>
+  <button data-tab="report"><b>📊</b>Report</button>
+  <button data-tab="impostazioni"><b>⚙️</b>Impostazioni</button>
+</nav>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><h1>Registro presenze</h1><span id="brandSub">Denny · dal 25/09/2025</span></div>
+    <span class="sync" id="sync" title=""><i></i><span>Caricamento…</span></span>
+  </header>
+  <main id="view"><div class="empty">Caricamento del registro…</div></main>
+</div>
+<div id="tip" hidden></div>
+<div id="modal"></div>
+
+<script>
+"use strict";
+/* ============================ utilità ============================ */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const MESI = ["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
+const MESI3 = MESI.map(m => m.slice(0,3));
+const GIORNI = ["Domenica","Lunedì","Martedì","Mercoledì","Giovedì","Venerdì","Sabato"];
+const WD1 = ["D","L","M","M","G","V","S"];
+const pad = n => String(n).padStart(2,"0");
+const ymd = (y,m,d) => `${y}-${pad(m)}-${pad(d)}`;
+const parts = ds => ds.split("-").map(Number);
+const dow = ds => { const [y,m,d] = parts(ds); return new Date(Date.UTC(y,m-1,d)).getUTCDay(); };
+const dim = (y,m) => new Date(Date.UTC(y,m,0)).getUTCDate();
+const addDays = (ds,n) => { const [y,m,d] = parts(ds); const t = new Date(Date.UTC(y,m-1,d+n)); return ymd(t.getUTCFullYear(),t.getUTCMonth()+1,t.getUTCDate()); };
+const todayStr = () => { const t = new Date(); return ymd(t.getFullYear(), t.getMonth()+1, t.getDate()); };
+const fmtHM = min => { min = Math.round(min||0); const s = min<0?"-":""; min=Math.abs(min); return `${s}${Math.floor(min/60)}:${pad(min%60)}`; };
+const fmtOre = min => { min = Math.round(min||0); const h=Math.floor(min/60), m=min%60; return h&&m?`${h} h ${m} min`:h?`${h} h`:`${m} min`; };
+function fmtDate(ds, long){
+  if(!ds) return "";
+  const [y,m,d] = parts(ds);
+  if(long) return `${GIORNI[dow(ds)]} ${d} ${MESI[m-1].toLowerCase()} ${y}`;
+  return S?.config?.preferenze?.formatoData === "aaaa-mm-gg" ? ds : `${pad(d)}/${pad(m)}/${y}`;
+}
+function easter(y){ const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),mo=Math.floor((h+l-7*m+114)/31),da=((h+l-7*m+114)%31)+1; return ymd(y,mo,da); }
+const clone = o => JSON.parse(JSON.stringify(o));
+const slug = s => String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"_").replace(/^_|_$/g,"") || "codice";
+const MEZZI_RE = /\b(sbt\d+|sb\d+|st\d+)\b/gi;
+const estraiMezzi = t => [...new Set((String(t||"").match(MEZZI_RE)||[]).map(x=>x.toUpperCase()))];
+
+/* ============================ stato ============================ */
+let S = null;            // {config, anni:{[y]:{giorni}}, meta}
+let UI = { tab:"calendario", year:null, month:null, filtro:"", setSec:"codici",
+           rep:{tipo:"anno", anno:null, mese:null, da:"", a:""} };
+
+/* ============================ archiviazione ============================ */
+const LS_KEY = "registroPresenze.v1", LS_BAK = "registroPresenze.backupAuto";
+const Store = {
+  mode:"local", db:null, downloads:null, status:"ok", err:"", dirty:new Set(), timer:null, chain:Promise.resolve(), unsubs:[],
+  async init(){
+    if(window.claude && typeof window.claude.use === "function"){
+      try{ this.db = await Promise.race([window.claude.use("db"), new Promise(r=>setTimeout(()=>r(null),10000))]); }catch(e){ this.db=null; }
+      window.claude.use("downloads").then(d=>{ this.downloads=d; }).catch(()=>{});
+    }
+    if(this.db){ this.mode="cloud"; return this.loadCloud(); }
+    this.mode="local"; return this.loadLocal();
+  },
+  async loadLocal(){
+    let data=null;
+    try{ const raw = localStorage.getItem(LS_KEY); if(raw) data = JSON.parse(raw); }catch(e){}
+    if(!data){ data = await fetchSeed(); if(data){ S=normalize(data); this.writeLocal(); return true; } }
+    S = data ? normalize(data) : null; return !!S;
+  },
+  writeLocal(){
+    try{ localStorage.setItem(LS_KEY, JSON.stringify(S)); this.setStatus("ok"); }
+    catch(e){ this.setStatus("err","Il browser non permette di salvare: esporta un backup."); }
+  },
+  async loadCloud(){
+    const [cfg, anni] = await Promise.all([this.db.doc("registro/config").get(), this.db.collection("anni").get()]);
+    if(!cfg.exists) { S=null; return false; }
+    const d = cfg.data();
+    const data = { config: clone(d.config), meta: clone(d.meta||{}), anni:{} };
+    anni.docs.forEach(doc => { data.anni[doc.id] = { giorni: clone(doc.data().giorni||{}) }; });
+    S = normalize(data);
+    this.subscribe();
+    return true;
+  },
+  subscribe(){
+    if(this.unsubs.length) return;
+    this.unsubs.push(this.db.doc("registro/config").onSnapshot(s=>{
+      if(!s.exists || s.metadata.hasPendingWrites || this.dirty.has("config")) return;
+      const d=s.data(); if(JSON.stringify(d.config)===JSON.stringify(S.config)) return;
+      S.config = normalize({config:clone(d.config),anni:S.anni}).config; S.meta = clone(d.meta||S.meta); render();
+    }, e=>this.setStatus("err","Sincronizzazione interrotta: ricarica la pagina.")));
+    this.unsubs.push(this.db.collection("anni").onSnapshot(q=>{
+      if(q.metadata.hasPendingWrites) return;
+      let changed=false;
+      q.docs.forEach(doc=>{ if(this.dirty.has("anno:"+doc.id)) return;
+        const g = doc.data().giorni||{};
+        if(!S.anni[doc.id] || JSON.stringify(S.anni[doc.id].giorni)!==JSON.stringify(g)){ S.anni[doc.id]={giorni:clone(g)}; changed=true; } });
+      if(changed) render();
+    }, e=>this.setStatus("err","Sincronizzazione interrotta: ricarica la pagina.")));
+  },
+  touch(key){ // key: "config" | "anno:2026"
+    S.meta.ultimaModifica = new Date().toISOString();
+    this.dirty.add(key); this.dirty.add("config");
+    this.setStatus("pending");
+    clearTimeout(this.timer); this.timer = setTimeout(()=>this.flush(), 500);
+  },
+  flush(){
+    if(this.mode==="local"){ this.dirty.clear(); this.writeLocal(); return Promise.resolve(); }
+    const keys=[...this.dirty]; this.dirty.clear();
+    this.chain = this.chain.then(async ()=>{
+      try{
+        for(const k of keys){
+          if(k==="config") await this.db.doc("registro/config").set({config:S.config, meta:S.meta});
+          else { const y=k.slice(5); await this.db.doc("anni/"+y).set({giorni:(S.anni[y]||{giorni:{}}).giorni}); }
+        }
+        if(!this.dirty.size) this.setStatus("ok");
+      }catch(e){
+        keys.forEach(k=>this.dirty.add(k));
+        this.setStatus("err", e && e.code==="quota_exceeded" ? "Spazio del database esaurito: esporta un backup." : e && e.code==="invalid_argument" ? "Non hai i permessi per modificare questo registro." : "Salvataggio non riuscito: riprovo tra poco.");
+        clearTimeout(this.timer); this.timer=setTimeout(()=>this.flush(), 6000);
+      }
+    });
+    return this.chain;
+  },
+  async replaceAll(data){ // usato da ripristino, reset e prima configurazione
+    S = normalize(data);
+    if(this.mode==="local"){ this.writeLocal(); return; }
+    this.setStatus("pending");
+    await this.chain;
+    const old = await this.db.collection("anni").get();
+    for(const d of old.docs) if(!S.anni[d.id]) await this.db.doc("anni/"+d.id).delete();
+    await this.db.doc("registro/config").set({config:S.config, meta:S.meta});
+    for(const y of Object.keys(S.anni)) await this.db.doc("anni/"+y).set({giorni:S.anni[y].giorni});
+    this.subscribe();
+    this.setStatus("ok");
+  },
+  async saveAutoBackup(){
+    const snap = { salvatoIl:new Date().toISOString(), dati:exportObj() };
+    if(this.mode==="cloud"){ try{ await this.db.doc("backup/automatico").set(snap); return true; }catch(e){ return false; } }
+    try{ localStorage.setItem(LS_BAK, JSON.stringify(snap)); return true; }catch(e){ return false; }
+  },
+  async readAutoBackup(){
+    if(this.mode==="cloud"){ try{ const s=await this.db.doc("backup/automatico").get(); return s.exists? s.data():null; }catch(e){ return null; } }
+    try{ const r=localStorage.getItem(LS_BAK); return r?JSON.parse(r):null; }catch(e){ return null; }
+  },
+  setStatus(st,msg=""){
+    this.status=st; this.err=msg;
+    const el=$("#sync"); if(!el) return;
+    el.className="sync "+(st==="ok"?"ok":st==="pending"?"pending":"err");
+    const txt = this.mode==="cloud"
+      ? (st==="ok"?"Dati sincronizzati":st==="pending"?"Modifiche non sincronizzate":"Errore sincronizzazione")
+      : (st==="err"?"Errore di salvataggio":"Salvato su questo dispositivo");
+    el.querySelector("span").textContent = txt;
+    el.title = msg || (this.mode==="cloud" ? "I dati sono salvati nel cloud e disponibili su tutti i tuoi dispositivi." : "I dati sono salvati solo in questo browser: esporta spesso un backup.");
+  }
+};
+async function fetchSeed(){ try{ const r = await fetch("seed.json",{cache:"no-store"}); if(r.ok) return await r.json(); }catch(e){} return null; }
+function normalize(d){
+  const c = d.config || {};
+  c.dataInizio ||= "2025-09-25";
+  c.codici ||= []; c.parametri ||= {}; c.congedoAvvio ||= {};
+  c.festivita ||= ["01-01","01-06","04-25","05-01","06-02","08-15","11-01","12-08","12-25","12-26"];
+  if(c.pasquetta===undefined) c.pasquetta=true;
+  if(c.domenicaRiposo===undefined) c.domenicaRiposo=true;
+  c.preferenze = Object.assign({tema:"auto",primoGiorno:1,formatoData:"gg/mm/aaaa"}, c.preferenze||{});
+  c.anniArchiviati ||= [];
+  const anni = d.anni || {};
+  for(const y of Object.keys(anni)) anni[y].giorni ||= {};
+  for(const y of Object.keys(c.parametri)) if(!anni[y]) anni[y]={giorni:{}};
+  return { config:c, anni, meta: Object.assign({ultimaModifica:null, ultimaEsportazione:null}, d.meta||{}) };
+}
+
+/* ============================ logica del registro ============================ */
+const codeById = id => S.config.codici.find(c=>c.id===id);
+const dayRec = ds => (S.anni[ds.slice(0,4)]?.giorni||{})[ds];
+function isFestivo(ds){
+  const md = ds.slice(5);
+  if(S.config.festivita.includes(md)) return true;
+  if(S.config.pasquetta && ds === addDays(easter(+ds.slice(0,4)),1)) return true;
+  return false;
+}
+/** Codice effettivo: quello inserito; altrimenti festività/domenica automatiche. */
+function effCode(ds){
+  const r = dayRec(ds);
+  if(r && r.codice) return { id:r.codice, auto:false };
+  if(ds < S.config.dataInizio) return null;
+  if(isFestivo(ds) && codeById("festivita")) return { id:"festivita", auto:true };
+  if(S.config.domenicaRiposo && dow(ds)===0 && codeById("riposo")) return { id:"riposo", auto:true };
+  return null;
+}
+function yearsList(includeArchived){
+  const ys = new Set(Object.keys(S.anni));
+  ys.add(S.config.dataInizio.slice(0,4));
+  return [...ys].map(Number).sort((a,b)=>a-b).filter(y=> includeArchived || !S.config.anniArchiviati.includes(y));
+}
+function* dates(from, to){ for(let d=from; d<=to; d=addDays(d,1)) yield d; }
+
+/** Libro del congedo: saldi per anno di maturazione, consumati dal più vecchio (come il registro modello). */
+function congedoLedger(){
+  const cfg=S.config, start=cfg.dataInizio, sy=+start.slice(0,4);
+  const b={}; for(const [y,v] of Object.entries(cfg.congedoAvvio)) b[y]=(+v||0);
+  const s0 = +(cfg.parametri[sy]?.congedoSpettante||0); if(s0) b[sy]=(b[sy]||0)+s0;
+  const points=[{date:start, b:clone(b), kind:"avvio"}];
+  const ys = yearsList(true); const maxY = Math.max(sy, ...ys);
+  const scala = new Set(cfg.codici.filter(c=>c.scalaCongedo).map(c=>c.id));
+  const yearStart={}; yearStart[sy]=clone(b);
+  for(let y=sy; y<=maxY; y++){
+    if(y>sy){ const a=+(cfg.parametri[y]?.congedoSpettante||0); if(a) b[y]=(b[y]||0)+a; yearStart[y]=clone(b); points.push({date:ymd(y,1,1), b:clone(b), kind:"accredito"}); }
+    const g = S.anni[y]?.giorni || {};
+    for(const ds of Object.keys(g).sort()){
+      if(ds<start || !scala.has(g[ds].codice)) continue;
+      const ks=Object.keys(b).sort(); let done=false;
+      for(const k of ks) if(b[k]>0){ b[k]--; done=true; break; }
+      if(!done){ const k=String(y); b[k]=(b[k]||0)-1; }
+      points.push({date:ds, b:clone(b), kind:"uso"});
+    }
+  }
+  return { points, yearStart,
+    at(ds){ let r=null; for(const p of points){ if(p.date<=ds) r=p; else break; } return r?r.b:{}; },
+    afterDay(ds){ const p=points.filter(p=>p.date===ds&&p.kind==="uso"); return p.length?p[p.length-1].b:null; } };
+}
+const tot = b => Object.values(b||{}).reduce((a,v)=>a+v,0);
+const bucketsTxt = b => { const e=Object.entries(b||{}).filter(([k,v])=>v!==0).sort(); return e.length? e.map(([k,v])=>`${k}: ${v}`).join(" · ") : "nessun residuo"; };
+
+/** Verifica i residui annotati nel calendario contro il calcolo dell'app. */
+function verificaCongedo(L){
+  const out=[];
+  for(const y of Object.keys(S.anni)) for(const [ds,r] of Object.entries(S.anni[y].giorni)){
+    if(!r.residuoCalendario) continue;
+    const calc = L.afterDay(ds) || {};
+    const exp = r.residuoCalendario;
+    let ok = tot(calc)===exp.totale;
+    for(const [k,v] of Object.entries(exp.perAnno||{})) if((calc[k]||0)!==v) ok=false;
+    out.push({ds, ok, calc, exp});
+  }
+  return out.sort((a,b)=>a.ds<b.ds?-1:1);
+}
+
+/** Statistiche su un intervallo [da, a] (incluso). */
+function stats(da, a){
+  const oggi = todayStr(), start=S.config.dataInizio;
+  if(da<start) da=start;
+  const r = { da, a, perCodice:{}, lavorate:0, trasferte:0, congedo:0, malattia:0, riposi:0, festivi:0, turniPom:0, turniPomLav:0,
+              straordMin:0, straordGiorni:[], permessoMin:0, permessoGiorni:[], vuoti:[], mesi:{}, mezzi:{}, registrate:0 };
+  if(a<da) return r;
+  for(const ds of dates(da,a)){
+    const rec = dayRec(ds) || {};
+    const ec = effCode(ds);
+    const mk = ds.slice(0,7);
+    const M = r.mesi[mk] ||= {lavorate:0,trasferte:0,congedo:0,malattia:0,straordMin:0,turniPom:0,permessoMin:0};
+    if(ec && ec.auto && ds>oggi) { continue; }
+    if(rec.codice) r.registrate++;
+    if(ec){
+      const c = codeById(ec.id);
+      r.perCodice[ec.id]=(r.perCodice[ec.id]||0)+1;
+      if(c?.lavorativo){ r.lavorate++; M.lavorate++; }
+      if(c?.categoria==="Trasferta"){ r.trasferte++; M.trasferte++; }
+      if(c?.scalaCongedo){ r.congedo++; M.congedo++; }
+      if(c?.categoria==="Malattia"){ r.malattia++; M.malattia++; }
+      if(c?.categoria==="Riposo") r.riposi++;
+      if(c?.categoria==="Festività") r.festivi++;
+      if(rec.turno && c?.lavorativo) r.turniPomLav++;
+    } else if(ds<=oggi && !rec.codice){ r.vuoti.push(ds); }
+    if(rec.turno && (ds<=oggi || rec.codice)){ r.turniPom++; M.turniPom++; }
+    if(rec.straordinarioMin){ r.straordMin+=rec.straordinarioMin; M.straordMin+=rec.straordinarioMin; r.straordGiorni.push(ds); }
+    if(rec.permessoMin){ r.permessoMin+=rec.permessoMin; M.permessoMin+=rec.permessoMin; r.permessoGiorni.push(ds); }
+    for(const m of rec.mezzi||[]) r.mezzi[m]=(r.mezzi[m]||0)+1;
+  }
+  return r;
+}
+
+/* ============================ rendering generale ============================ */
+function setTab(t){ UI.tab=t; if(location.hash!=="#"+t) history.replaceState(null,"","#"+t); render(); window.scrollTo(0,0); }
+$("#tabs").addEventListener("click", e=>{ const b=e.target.closest("button[data-tab]"); if(b) setTab(b.dataset.tab); });
+function applyTheme(){
+  const t = S?.config?.preferenze?.tema;
+  if(t==="light"||t==="dark") document.documentElement.setAttribute("data-theme", t);
+  else if(document.documentElement.dataset.userTheme==="1") document.documentElement.removeAttribute("data-theme");
+  if(t==="light"||t==="dark") document.documentElement.dataset.userTheme="1";
+}
+function render(){
+  document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-current", b.dataset.tab===UI.tab?"page":"false"));
+  if(!S){ $("#view").innerHTML = emptyState(); return; }
+  applyTheme();
+  $("#brandSub").textContent = `Denny · dal ${fmtDate(S.config.dataInizio)}`;
+  if(UI.tab==="calendario") renderCal();
+  else if(UI.tab==="report") renderReport();
+  else renderSettings();
+}
+function emptyState(){
+  return `<div class="card empty stack" style="align-items:center">
+    <h2 style="font-size:24px">Il registro è vuoto</h2>
+    <p class="muted" style="max-width:46ch;margin:0">Carica i dati importati dal tuo calendario oppure ripristina un backup salvato in precedenza.</p>
+    <div class="row" style="justify-content:center">
+      <button class="btn primary" id="loadSeed">Carica dati dal calendario</button>
+      <label class="btn">Ripristina backup<input type="file" accept=".json,application/json" id="emptyRestore" hidden></label>
+    </div><p class="small bad" id="emptyMsg"></p></div>`;
+}
+document.addEventListener("click", async e=>{
+  if(e.target.id==="loadSeed"){
+    const d = await fetchSeed();
+    if(!d){ $("#emptyMsg").textContent="Il file dei dati iniziali (seed.json) non è disponibile qui. Usa «Ripristina backup»."; return; }
+    await Store.replaceAll(d); render();
+  }
+});
+document.addEventListener("change", async e=>{
+  if(e.target.id==="emptyRestore" && e.target.files[0]){
+    try{ const d=JSON.parse(await e.target.files[0].text()); if(!isBackup(d)) throw 0; await Store.replaceAll(d.dati||d); render(); }
+    catch(err){ $("#emptyMsg").textContent="Questo file non è un backup del Registro presenze."; }
+  }
+});
+
+/* ============================ CALENDARIO ============================ */
+function renderCal(){
+  const ys = yearsList(false), oggi=todayStr();
+  if(UI.year==null || !ys.includes(UI.year)) UI.year = ys.includes(+oggi.slice(0,4)) ? +oggi.slice(0,4) : ys[ys.length-1];
+  const y = UI.year, start=S.config.dataInizio;
+  const firstM = (y===+start.slice(0,4)) ? +start.slice(5,7) : 1;
+  if(UI.month==null || UI.month<firstM) UI.month = (y===+oggi.slice(0,4)) ? +oggi.slice(5,7) : firstM;
+  const m = UI.month;
+  const L = congedoLedger();
+  const ys_ = stats(ymd(y,1,1), ymd(y,12,31));
+  const resNow = L.at(oggi < ymd(y,12,31) ? oggi : ymd(y,12,31));
+  const permDisp = (+(S.config.parametri[y]?.permessiOre||0))*60;
+  const filtri = S.config.codici.filter(c=>c.attivo || usage()[c.id]);
+  const cats = [...new Set(S.config.codici.map(c=>c.categoria))];
+
+  let h = `<div class="yearstrip">
+    <div><span>Giornate lavorate ${y}</span><b>${ys_.lavorate}</b></div>
+    <div><span>Congedo residuo</span><b>${tot(resNow)}</b></div>
+    <div><span>Straordinari ${y}</span><b>${fmtHM(ys_.straordMin)}</b></div>
+    <div><span>Permessi residui</span><b>${fmtHM(permDisp-ys_.permessoMin)}</b></div>
+  </div>
+  <div class="calbar">
+    <select id="yearSel" aria-label="Anno">${ys.map(v=>`<option ${v===y?"selected":""}>${v}</option>`).join("")}</select>
+    <button class="btn" id="prevM" aria-label="Mese precedente">‹</button>
+    <button class="btn" id="nextM" aria-label="Mese successivo">›</button>
+    <button class="btn" id="todayB">Oggi</button>
+    <input type="date" id="goDate" aria-label="Vai a una data" min="${start}">
+    <select id="filtro" aria-label="Filtro" class="grow" style="max-width:220px">
+      <option value="">Tutti i giorni</option>
+      <optgroup label="Codice">${filtri.map(c=>`<option value="c:${esc(c.id)}" ${UI.filtro==="c:"+c.id?"selected":""}>${esc(c.nome)}</option>`).join("")}</optgroup>
+      <optgroup label="Categoria">${cats.map(c=>`<option value="k:${esc(c)}" ${UI.filtro==="k:"+c?"selected":""}>${esc(c)}</option>`).join("")}</optgroup>
+      <optgroup label="Altro"><option value="x:turno" ${UI.filtro==="x:turno"?"selected":""}>Turno pomeridiano</option><option value="x:straord" ${UI.filtro==="x:straord"?"selected":""}>Con straordinario</option><option value="x:vuoti" ${UI.filtro==="x:vuoti"?"selected":""}>Senza registrazione</option></optgroup>
+    </select>
+  </div>
+  <div class="months" role="group" aria-label="Mesi">${MESI.map((n,i)=>`<button data-m="${i+1}" aria-pressed="${i+1===m}" ${i+1<firstM?"disabled":""}>${MESI3[i]}</button>`).join("")}</div>`;
+
+  const ms = stats(ymd(y,m,1), ymd(y,m,dim(y,m)));
+  h += `<div class="card" style="padding:12px">
+    <div class="monthhead"><h2>${MESI[m-1]} <small>${y}</small></h2>
+      <div class="small muted" style="text-align:right">${ms.lavorate} lavorate · ${ms.congedo} congedo${ms.straordMin?` · straord. ${fmtHM(ms.straordMin)}`:""}${ms.turniPom?` · ${ms.turniPom} pom.`:""}</div></div>`;
+  const fd = S.config.preferenze.primoGiorno===0 ? 0 : 1;
+  const order = fd===1 ? [1,2,3,4,5,6,0] : [0,1,2,3,4,5,6];
+  h += `<div class="grid">${order.map(i=>`<div class="wd">${WD1[i]}</div>`).join("")}`;
+  const lead = (dow(ymd(y,m,1)) - fd + 7) % 7;
+  for(let i=0;i<lead;i++) h += `<div class="day pad" aria-hidden="true"></div>`;
+  for(let d=1; d<=dim(y,m); d++){
+    const ds = ymd(y,m,d), rec = dayRec(ds)||{}, ec = effCode(ds), c = ec && codeById(ec.id);
+    const out = ds < start;
+    const cls = ["day"]; if(dow(ds)===0||isFestivo(ds)) cls.push("sun"); if(ds===oggi) cls.push("today");
+    if(out) cls.push("out"); else if(c) cls.push(ec.auto?"auto":"coded");
+    if(UI.filtro && !out && !matchFiltro(ds, rec, ec, c)) cls.push("dim");
+    const tags = [];
+    if(rec.turno) tags.push(`<span class="tag pm" title="Turno pomeridiano">POM</span>`);
+    if(rec.straordinarioMin) tags.push(`<span class="tag ot" title="Straordinario">+${fmtHM(rec.straordinarioMin)}</span>`);
+    if(rec.permessoMin) tags.push(`<span class="tag" title="Permesso">P ${fmtHM(rec.permessoMin)}</span>`);
+    if(rec.note) tags.push(`<span class="tag" title="${esc(rec.note)}">✎</span>`);
+    const label = `${fmtDate(ds,true)}${c?", "+c.nome:""}${rec.turno?", turno pomeridiano":""}`;
+    h += `<button class="${cls.join(" ")}" ${out?"disabled":""} data-day="${ds}" style="--c:${c?esc(c.colore):"var(--muted)"}" aria-label="${esc(label)}">
+      <span class="num">${d}</span>
+      ${c?`<span class="code">${esc(c.nome)}</span>`:""}
+      ${rec.dettaglio && c && c.id!=="congedo"?`<span class="det">${esc(rec.dettaglio)}</span>`:""}
+      ${tags.length?`<span class="tags">${tags.join("")}</span>`:""}
+    </button>`;
+  }
+  h += `</div>`;
+  const used = new Set(); for(let d=1; d<=dim(y,m); d++){ const ec=effCode(ymd(y,m,d)); if(ec) used.add(ec.id); }
+  h += `<div class="legend">${[...used].map(id=>{const c=codeById(id); return c?`<span class="pill" style="--c:${esc(c.colore)}"><span class="dot"></span>${esc(c.nome)}</span>`:""}).join("")}
+    <span class="pill"><span class="tag pm" style="margin:0">POM</span>turno pomeridiano</span>
+    <span class="pill" style="border-style:dashed">tratteggio = automatico</span></div></div>`;
+  $("#view").innerHTML = h;
+
+  $("#yearSel").onchange = e=>{ UI.year=+e.target.value; UI.month=null; renderCal(); };
+  $("#prevM").onclick = ()=>stepMonth(-1);
+  $("#nextM").onclick = ()=>stepMonth(1);
+  $("#todayB").onclick = ()=>{ const t=todayStr(); UI.year=+t.slice(0,4); UI.month=+t.slice(5,7); renderCal(); };
+  $("#goDate").onchange = e=>{ const v=e.target.value; if(!v) return; if(!yearsList(false).includes(+v.slice(0,4))){ toast("Anno non presente: aggiungilo da Impostazioni → Anni."); return; } UI.year=+v.slice(0,4); UI.month=+v.slice(5,7); renderCal(); if(v>=S.config.dataInizio) openDay(v); };
+  $("#filtro").onchange = e=>{ UI.filtro=e.target.value; renderCal(); };
+  document.querySelectorAll(".months button").forEach(b=>b.onclick=()=>{ UI.month=+b.dataset.m; renderCal(); });
+  document.querySelectorAll(".day[data-day]").forEach(b=>b.onclick=()=>openDay(b.dataset.day));
+}
+function matchFiltro(ds, rec, ec, c){
+  const f=UI.filtro, v=f.slice(2);
+  if(f.startsWith("c:")) return ec && ec.id===v;
+  if(f.startsWith("k:")) return c && c.categoria===v;
+  if(f==="x:turno") return !!rec.turno;
+  if(f==="x:straord") return !!rec.straordinarioMin;
+  if(f==="x:vuoti") return !ec && ds<=todayStr();
+  return true;
+}
+function stepMonth(n){
+  let y=UI.year, m=UI.month+n; if(m<1){y--;m=12;} if(m>12){y++;m=1;}
+  const ys=yearsList(false); if(!ys.includes(y)) return;
+  const s=S.config.dataInizio; if(ymd(y,m,dim(y,m))<s) return;
+  UI.year=y; UI.month=m; renderCal();
+}
+let _usage=null, _usageAt=null;
+function usage(){ if(_usageAt===S.meta.ultimaModifica && _usage) return _usage; const u={}; for(const y of Object.keys(S.anni)) for(const r of Object.values(S.anni[y].giorni)) if(r.codice) u[r.codice]=(u[r.codice]||0)+1; _usage=u; _usageAt=S.meta.ultimaModifica; return u; }
+
+/* ---------- editor giornata ---------- */
+function openDay(ds){
+  const rec = clone(dayRec(ds)||{}), ec = effCode(ds);
+  const L = congedoLedger();
+  const active = S.config.codici.filter(c=>c.attivo || c.id===rec.codice);
+  const groups = {}; active.forEach(c=>(groups[c.categoria] ||= []).push(c));
+  let sel = rec.codice || "";
+  const oH=Math.floor((rec.straordinarioMin||0)/60), oM=(rec.straordinarioMin||0)%60;
+  const pH=Math.floor((rec.permessoMin||0)/60), pM=(rec.permessoMin||0)%60;
+  const f1=(rec.straordinarioFasce||[])[0]||{}, pf=(rec.permessoFascia)||{};
+  $("#modal").innerHTML = `<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="shT">
+    <div class="row" style="justify-content:space-between"><h3 id="shT">${esc(fmtDate(ds,true))}</h3><button class="btn ghost" id="shX" aria-label="Chiudi">✕</button></div>
+    ${ec&&ec.auto?`<p class="notice small" style="margin:0">Oggi risulta <b>${esc(codeById(ec.id).nome)}</b> in automatico. Scegli un codice per registrarlo diversamente.</p>`:""}
+    <div class="stack" style="gap:8px"><span class="lbl">Stato della giornata</span>
+      <div class="chips" id="chips"><button class="chip" data-c="" aria-pressed="${sel===""}">Nessuno</button>
+      ${Object.entries(groups).map(([k,cs])=>cs.map(c=>`<button class="chip" data-c="${esc(c.id)}" style="--c:${esc(c.colore)}" aria-pressed="${sel===c.id}"><span class="dot"></span>${esc(c.nome)}</button>`).join("")).join("")}</div></div>
+    <label class="switch"><input type="checkbox" id="fTurno" ${rec.turno?"checked":""}> Turno pomeridiano</label>
+    <label class="f">Attività (mezzo e intervento)<input type="text" id="fDet" value="${esc(rec.dettaglio||"")}" placeholder="es. st4 c5"></label>
+    <div class="two">
+      <div class="stack" style="gap:6px"><span class="lbl">Straordinario</span>
+        <div class="hm"><input type="number" id="oH" min="0" max="24" value="${oH||""}" placeholder="0" aria-label="Ore straordinario"> h <input type="number" id="oM" min="0" max="59" value="${oM||""}" placeholder="0" aria-label="Minuti straordinario"> min</div>
+        <div class="hm small muted">dalle <input type="time" id="oDa" value="${esc(f1.dalle||"")}"> alle <input type="time" id="oA" value="${esc(f1.alle||"")}"></div></div>
+      <div class="stack" style="gap:6px"><span class="lbl">Permesso</span>
+        <div class="hm"><input type="number" id="pH" min="0" max="24" value="${pH||""}" placeholder="0" aria-label="Ore permesso"> h <input type="number" id="pM" min="0" max="59" value="${pM||""}" placeholder="0" aria-label="Minuti permesso"> min</div>
+        <div class="hm small muted">dalle <input type="time" id="pDa" value="${esc(pf.dalle||"")}"> alle <input type="time" id="pA" value="${esc(pf.alle||"")}"></div></div>
+    </div>
+    <label class="f">Note<textarea id="fNote" placeholder="Aggiungi una nota">${esc(rec.note||"")}</textarea></label>
+    <div id="congInfo"></div>
+    ${rec.origine?`<p class="small muted" style="margin:0">Origine: ${esc(rec.origine)}${rec.modificatoIl?` · modificato il ${esc(fmtDate(rec.modificatoIl.slice(0,10)))}`:""}</p>`:""}
+    <div class="row" style="justify-content:space-between">
+      <button class="btn danger" id="shClear" ${dayRec(ds)?"":"disabled"}>Svuota giornata</button>
+      <div class="row"><button class="btn" id="shCancel">Annulla</button><button class="btn primary" id="shSave">Salva</button></div>
+    </div></div></div>`;
+  const congInfo = ()=>{
+    const c = codeById(sel); const box=$("#congInfo");
+    if(!c?.scalaCongedo){ box.innerHTML=""; return; }
+    const before = L.at(addDays(ds,-1));
+    let after = dayRec(ds)?.codice===sel ? L.afterDay(ds) : null;
+    if(!after){ after = clone(L.at(ds)); const ks=Object.keys(after).sort(); const k=ks.find(k=>after[k]>0); if(k) after[k]--; }
+    let chk="";
+    const rc = rec.residuoCalendario;
+    if(rc){ let ok=tot(after)===rc.totale; for(const [k,v] of Object.entries(rc.perAnno||{})) if((after[k]||0)!==v) ok=false;
+      chk = `<br>Annotato nel calendario: ${rc.totale} (${bucketsTxt(rc.perAnno)}) — <b class="${ok?"ok":"bad"}">${ok?"coincide":"non coincide"}</b>`; }
+    box.innerHTML = `<p class="notice small" style="margin:0">Congedo residuo dopo questa giornata: <b>${tot(after)}</b> (${bucketsTxt(after)})${chk}</p>`;
+  };
+  congInfo();
+  const close = ()=>{ $("#modal").innerHTML=""; };
+  $("#shX").onclick=close; $("#shCancel").onclick=close;
+  $("#scrim").onclick = e=>{ if(e.target.id==="scrim") close(); };
+  document.addEventListener("keydown", function k(e){ if(e.key==="Escape"){ close(); document.removeEventListener("keydown",k); } });
+  $("#chips").onclick = e=>{ const b=e.target.closest(".chip"); if(!b) return; sel=b.dataset.c; $("#chips").querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed", x===b)); congInfo(); };
+  const span = (a,b)=>{ if(!a||!b) return null; const [h1,m1]=a.split(":").map(Number),[h2,m2]=b.split(":").map(Number); let d=(h2*60+m2)-(h1*60+m1); if(d<0) d+=1440; return d; };
+  const fill = (a,b,H,Mi)=>()=>{ const d=span($(a).value,$(b).value); if(d!=null){ $(H).value=Math.floor(d/60)||""; $(Mi).value=d%60||""; } };
+  ["#oDa","#oA"].forEach(s=>$(s).onchange=fill("#oDa","#oA","#oH","#oM"));
+  ["#pDa","#pA"].forEach(s=>$(s).onchange=fill("#pDa","#pA","#pH","#pM"));
+  $("#shClear").onclick = ()=>{ const y=ds.slice(0,4); delete S.anni[y].giorni[ds]; Store.touch("anno:"+y); close(); render(); toast("Giornata svuotata"); };
+  $("#shSave").onclick = ()=>{
+    const y=ds.slice(0,4); S.anni[y] ||= {giorni:{}};
+    const n = {};
+    if(sel) n.codice = sel;
+    if($("#fTurno").checked) n.turno = "pomeriggio";
+    const det=$("#fDet").value.trim(); if(det){ n.dettaglio=det; const mz=estraiMezzi(det); if(mz.length) n.mezzi=mz; }
+    const om=(+$("#oH").value||0)*60+(+$("#oM").value||0); if(om>0) n.straordinarioMin=om;
+    if($("#oDa").value && $("#oA").value) n.straordinarioFasce=[{dalle:$("#oDa").value, alle:$("#oA").value}];
+    const pm=(+$("#pH").value||0)*60+(+$("#pM").value||0); if(pm>0) n.permessoMin=pm;
+    if($("#pDa").value && $("#pA").value) n.permessoFascia={dalle:$("#pDa").value, alle:$("#pA").value};
+    const note=$("#fNote").value.trim(); if(note) n.note=note;
+    if(rec.residuoCalendario && sel===rec.codice) n.residuoCalendario=rec.residuoCalendario;
+    const old = dayRec(ds);
+    const strip = o=>{ const c=clone(o||{}); delete c.origine; delete c.modificatoIl; return JSON.stringify(c); };
+    if(strip(old)===strip(n)){ close(); return; }
+    if(!Object.keys(n).length){ delete S.anni[y].giorni[ds]; }
+    else { n.origine = old?.origine ? (old.origine.startsWith("calendario")? old.origine+" · corretto a mano" : old.origine) : "inserito a mano"; n.modificatoIl=new Date().toISOString(); S.anni[y].giorni[ds]=n; }
+    Store.touch("anno:"+y); close(); render(); toast("Giornata salvata");
+  };
+}
+let toastT;
+function toast(msg){
+  let t=$("#toast"); if(!t){ t=document.createElement("div"); t.id="toast"; t.setAttribute("role","status");
+    t.style.cssText="position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h) + 16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:8px;font-size:14px;z-index:70;max-width:calc(100vw - 32px)"; document.body.appendChild(t); }
+  t.textContent=msg; t.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>t.hidden=true, 2600);
+}
+
+/* ============================ REPORT ============================ */
+function reportRange(){
+  const R=UI.rep, ys=yearsList(true), oggi=todayStr();
+  if(R.anno==null || !ys.includes(R.anno)) R.anno = ys.includes(+oggi.slice(0,4)) ? +oggi.slice(0,4) : ys[ys.length-1];
+  if(R.mese==null) R.mese = +oggi.slice(5,7);
+  if(R.tipo==="anno") return [ymd(R.anno,1,1), ymd(R.anno,12,31)];
+  if(R.tipo==="mese") return [ymd(R.anno,R.mese,1), ymd(R.anno,R.mese,dim(R.anno,R.mese))];
+  const da = R.da || S.config.dataInizio, a = R.a || oggi;
+  return da<=a ? [da,a] : [a,da];
+}
+function renderReport(){
+  const R=UI.rep, [da0,a]=reportRange(), ys=yearsList(true), oggi=todayStr();
+  const st = stats(da0,a), da=st.da;
+  const L = congedoLedger();
+  const fine = a<oggi ? a : oggi;
+  const resFine = L.at(fine), resIni = L.at(addDays(da,-1) < S.config.dataInizio ? S.config.dataInizio : addDays(da,-1));
+  const accrIn = Object.entries(S.config.parametri).filter(([y,p])=>+y>+S.config.dataInizio.slice(0,4) && ymd(+y,1,1)>=da && ymd(+y,1,1)<=a).reduce((s,[y,p])=>s+(+p.congedoSpettante||0),0);
+  // permessi: disponibilità degli anni coinvolti
+  const yIn=[]; for(let y=+da.slice(0,4); y<=+a.slice(0,4); y++) yIn.push(y);
+  const permDisp = yIn.reduce((s,y)=>s+(+(S.config.parametri[y]?.permessiOre||0))*60,0);
+  const permUsatiAnni = yIn.reduce((s,y)=>s+stats(ymd(y,1,1),ymd(y,12,31)).permessoMin,0);
+  const periodo = R.tipo==="anno" ? `Anno ${R.anno}` : R.tipo==="mese" ? `${MESI[R.mese-1]} ${R.anno}` : `Dal ${fmtDate(da)} al ${fmtDate(a)}`;
+
+  let h = `<div class="card" style="margin-bottom:14px;padding:12px"><div class="row">
+    <div class="row" role="group" aria-label="Periodo">${["anno","mese","intervallo"].map(t=>`<button class="btn sm ${R.tipo===t?"primary":""}" data-rt="${t}">${t[0].toUpperCase()+t.slice(1)}</button>`).join("")}</div>
+    ${R.tipo!=="intervallo"?`<select id="rAnno" aria-label="Anno">${ys.map(y=>`<option ${y===R.anno?"selected":""}>${y}</option>`).join("")}</select>`:""}
+    ${R.tipo==="mese"?`<select id="rMese" aria-label="Mese">${MESI.map((n,i)=>`<option value="${i+1}" ${i+1===R.mese?"selected":""}>${n}</option>`).join("")}</select>`:""}
+    ${R.tipo==="intervallo"?`<label class="small">dal <input type="date" id="rDa" value="${esc(R.da||S.config.dataInizio)}" min="${S.config.dataInizio}"></label><label class="small">al <input type="date" id="rA" value="${esc(R.a||oggi)}"></label>`:""}
+  </div><p class="small muted" style="margin:8px 0 0">${esc(periodo)} · dati dal ${fmtDate(da)} al ${fmtDate(a)}${a>oggi?" (giorni futuri esclusi dai conteggi automatici)":""}</p></div>`;
+
+  h += `<div class="tiles" style="margin-bottom:14px">
+    <div class="tile"><span>Giornate lavorate</span><b>${st.lavorate}</b><small>di cui ${st.trasferte} in trasferta</small></div>
+    <div class="tile"><span>Straordinari</span><b>${fmtHM(st.straordMin)}</b><small>${st.straordGiorni.length} giornate</small></div>
+    <div class="tile"><span>Congedo usato</span><b>${st.congedo}</b><small>residuo ${tot(resFine)} gg</small></div>
+    <div class="tile"><span>Turni pomeridiani</span><b>${st.turniPomLav}</b><small>lavorati su ${st.turniPom} in calendario</small></div>
+  </div>`;
+
+  const mk = Object.keys(st.mesi).sort();
+  h += `<div class="rgrid">`;
+  // Presenze
+  const lav = S.config.codici.filter(c=>c.lavorativo && st.perCodice[c.id]).sort((x,y)=>st.perCodice[y.id]-st.perCodice[x.id]);
+  const maxC = Math.max(1,...lav.map(c=>st.perCodice[c.id]));
+  h += `<section class="card"><h2>Presenze</h2>
+    ${mk.length>1?barChart(mk.map(k=>({l:MESI3[+k.slice(5)-1]+(mk.length>12?" "+k.slice(2,4):""), v:st.mesi[k].lavorate, t:`${MESI[+k.slice(5)-1]} ${k.slice(0,4)}: ${st.mesi[k].lavorate} giornate lavorate`})),"giornate"):""}
+    <div class="hbar" style="margin-top:12px">${lav.map(c=>`<span>${esc(c.nome)}</span><div class="track"><div class="fill" style="--c:${esc(c.colore)};width:${st.perCodice[c.id]/maxC*100}%"></div></div><b>${st.perCodice[c.id]}</b>`).join("") || `<span class="muted">Nessuna presenza nel periodo</span>`}</div>
+  </section>`;
+  // Straordinari
+  h += `<section class="card"><h2>Straordinari</h2>
+    <dl class="kv"><dt>Totale nel periodo</dt><dd>${fmtOre(st.straordMin)}</dd><dt>Giornate con straordinario</dt><dd>${st.straordGiorni.length}</dd></dl>
+    ${mk.length>1&&st.straordMin?barChart(mk.map(k=>({l:MESI3[+k.slice(5)-1]+(mk.length>12?" "+k.slice(2,4):""), v:st.mesi[k].straordMin/60, lab:st.mesi[k].straordMin?fmtHM(st.mesi[k].straordMin):"", t:`${MESI[+k.slice(5)-1]} ${k.slice(0,4)}: ${fmtOre(st.mesi[k].straordMin)}`})),"ore"):""}
+    ${st.straordGiorni.length?`<details style="margin-top:10px"><summary class="small" style="cursor:pointer">Giornate che hanno generato straordinario</summary><div class="tscroll"><table><tr><th>Data</th><th>Attività</th><th class="n">Ore</th></tr>
+      ${st.straordGiorni.map(ds=>{const r=dayRec(ds);return `<tr><td>${fmtDate(ds)}</td><td>${esc(r.dettaglio||"")}</td><td class="n">${fmtHM(r.straordinarioMin)}</td></tr>`}).join("")}</table></div></details>`:""}
+  </section>`;
+  // Congedo
+  h += `<section class="card"><h2>Congedo (ferie)</h2>
+    <dl class="kv"><dt>Residuo a inizio periodo</dt><dd>${tot(resIni)}</dd>
+    ${accrIn?`<dt>Spettanza accreditata nel periodo</dt><dd>+${accrIn}</dd>`:""}
+    <dt>Disponibile nel periodo</dt><dd>${tot(resIni)+accrIn}</dd>
+    <dt>Utilizzato nel periodo</dt><dd>${st.congedo}</dd>
+    <dt>Residuo al ${fmtDate(fine)}</dt><dd>${tot(resFine)}</dd></dl>
+    <p class="small muted" style="margin:10px 0 6px">Residuo per anno di maturazione (si consuma prima il più vecchio)</p>
+    <div class="chips">${Object.entries(resFine).sort().map(([k,v])=>`<span class="pill">${k}: <b>${v}</b></span>`).join("")}</div>
+  </section>`;
+  // Permessi e assenze
+  h += `<section class="card"><h2>Permessi e altre voci</h2>
+    <dl class="kv"><dt>Permessi disponibili ${yIn.join("–")}</dt><dd>${fmtHM(permDisp)}</dd><dt>Permessi usati nel periodo</dt><dd>${fmtHM(st.permessoMin)}</dd><dt>Permessi residui</dt><dd>${fmtHM(permDisp-permUsatiAnni)}</dd>
+    <dt>Malattia</dt><dd>${st.malattia} gg</dd><dt>Riposi</dt><dd>${st.riposi} gg</dd><dt>Festività</dt><dd>${st.festivi} gg</dd><dt>Turni pomeridiani in calendario</dt><dd>${st.turniPom}</dd>
+    <dt>Giorni senza registrazione</dt><dd class="${st.vuoti.length?"warn":""}">${st.vuoti.length}</dd></dl>
+    ${st.vuoti.length?`<p class="small muted" style="margin:8px 0 0">${st.vuoti.map(fmtDate).join(", ")}</p>`:""}
+  </section>`;
+  h += `</div>`;
+  // Andamento mensile
+  if(mk.length>1) h += `<section class="card" style="margin-top:14px"><h2>Andamento mensile</h2><div class="tscroll"><table>
+    <tr><th>Mese</th><th class="n">Lavorate</th><th class="n">Trasferte</th><th class="n">Congedo</th><th class="n">Malattia</th><th class="n">Straord.</th><th class="n">Permessi</th><th class="n">Turni pom.</th></tr>
+    ${mk.map(k=>{const M=st.mesi[k];return `<tr><td>${MESI[+k.slice(5)-1]} ${k.slice(0,4)}</td><td class="n">${M.lavorate}</td><td class="n">${M.trasferte}</td><td class="n">${M.congedo}</td><td class="n">${M.malattia}</td><td class="n">${fmtHM(M.straordMin)}</td><td class="n">${fmtHM(M.permessoMin)}</td><td class="n">${M.turniPom}</td></tr>`}).join("")}
+    <tr><th>Totale</th><th class="n">${st.lavorate}</th><th class="n">${st.trasferte}</th><th class="n">${st.congedo}</th><th class="n">${st.malattia}</th><th class="n">${fmtHM(st.straordMin)}</th><th class="n">${fmtHM(st.permessoMin)}</th><th class="n">${st.turniPom}</th></tr>
+  </table></div></section>`;
+  // Mezzi
+  const mz = Object.entries(st.mezzi).sort((x,y)=>y[1]-x[1]);
+  if(mz.length){ const mx=mz[0][1]; h += `<section class="card" style="margin-top:14px"><h2>Mezzi su cui hai lavorato</h2><div class="hbar">${mz.slice(0,12).map(([k,v])=>`<span>${esc(k)}</span><div class="track"><div class="fill" style="width:${v/mx*100}%"></div></div><b>${v}</b>`).join("")}</div>${mz.length>12?`<p class="small muted" style="margin:8px 0 0">Altri ${mz.length-12} mezzi con meno interventi.</p>`:""}</section>`; }
+  $("#view").innerHTML = h;
+  document.querySelectorAll("[data-rt]").forEach(b=>b.onclick=()=>{ R.tipo=b.dataset.rt; renderReport(); });
+  $("#rAnno") && ($("#rAnno").onchange=e=>{ R.anno=+e.target.value; renderReport(); });
+  $("#rMese") && ($("#rMese").onchange=e=>{ R.mese=+e.target.value; renderReport(); });
+  $("#rDa") && ($("#rDa").onchange=e=>{ R.da=e.target.value; renderReport(); });
+  $("#rA") && ($("#rA").onchange=e=>{ R.a=e.target.value; renderReport(); });
+  bindTips();
+}
+function barChart(data, unit){
+  const W=Math.max(320, data.length*34), H=170, pl=8, pr=8, pt=18, pb=24;
+  const max = Math.max(...data.map(d=>d.v), 0);
+  const nice = max<=0?1: (()=>{ const p=Math.pow(10,Math.floor(Math.log10(max))); const n=[1,2,2.5,5,10].map(x=>x*p).find(x=>x>=max); return n; })();
+  const bw = (W-pl-pr)/data.length, barW=Math.min(26, bw-6);
+  const yv = v=> pt + (H-pt-pb)*(1-v/nice);
+  let s = `<div class="tscroll"><svg class="chart" viewBox="0 0 ${W} ${H}" style="min-width:${Math.min(W,320)}px" role="img" aria-label="Grafico per mese (${unit})">`;
+  s += `<line x1="${pl}" x2="${W-pr}" y1="${yv(0)}" y2="${yv(0)}"/><line x1="${pl}" x2="${W-pr}" y1="${yv(nice/2)}" y2="${yv(nice/2)}" stroke-dasharray="2 3"/>`;
+  s += `<text x="${W-pr}" y="${yv(nice/2)-4}" text-anchor="end">${unit==="ore"?nice/2+" h":nice/2}</text>`;
+  data.forEach((d,i)=>{
+    const x = pl + i*bw + (bw-barW)/2, y=yv(d.v), h=Math.max(0,yv(0)-y);
+    if(h>0) s += `<path d="M${x},${yv(0)} v${-(h-Math.min(4,h))} q0,-${Math.min(4,h)} ${Math.min(4,h)},-${Math.min(4,h)} h${barW-2*Math.min(4,h)} q${Math.min(4,h)},0 ${Math.min(4,h)},${Math.min(4,h)} v${h-Math.min(4,h)} z" fill="var(--accent)"/>`;
+    s += `<rect class="hit" data-tip="${esc(d.t)}" x="${pl+i*bw}" y="${pt}" width="${bw}" height="${H-pt-pb}" fill="transparent"/>`;
+    const lab = d.lab!=null ? d.lab : (d.v? String(Math.round(d.v)) : "");
+    if(lab) s += `<text class="v" x="${x+barW/2}" y="${y-4}" text-anchor="middle">${esc(lab)}</text>`;
+    s += `<text x="${x+barW/2}" y="${H-7}" text-anchor="middle">${esc(d.l)}</text>`;
+  });
+  return s+`</svg></div>`;
+}
+function bindTips(){
+  const tip=$("#tip");
+  document.querySelectorAll("[data-tip]").forEach(el=>{
+    const show=e=>{ tip.textContent=el.dataset.tip; tip.hidden=false; const p=e.touches?e.touches[0]:e; tip.style.left=Math.min(p.clientX+12, innerWidth-tip.offsetWidth-8)+"px"; tip.style.top=(p.clientY-34)+"px"; };
+    el.addEventListener("mousemove",show); el.addEventListener("touchstart",show,{passive:true});
+    el.addEventListener("mouseleave",()=>tip.hidden=true);
+  });
+}
+document.addEventListener("touchstart",e=>{ if(!e.target.closest("[data-tip]")) $("#tip").hidden=true; },{passive:true});
+
+/* ============================ IMPOSTAZIONI ============================ */
+const SEZ = [["codici","Codici"],["anni","Anni"],["parametri","Parametri annuali"],["backup","Backup e dati"],["excel","Excel e CSV"],["dati","Gestione dati"],["generali","Aspetto e preferenze"],["reset","Ripristina applicazione"]];
+function renderSettings(){
+  let h = `<div class="set"><nav class="setnav" aria-label="Sezioni impostazioni">${SEZ.map(([k,n])=>`<button data-s="${k}" aria-current="${UI.setSec===k}">${n}</button>`).join("")}</nav><div id="setBody" class="stack" style="min-width:0"></div></div>`;
+  $("#view").innerHTML = h;
+  document.querySelectorAll(".setnav button").forEach(b=>b.onclick=()=>{ UI.setSec=b.dataset.s; renderSettings(); });
+  ({codici:setCodici, anni:setAnni, parametri:setParametri, backup:setBackup, excel:setExcel, dati:setDati, generali:setGenerali, reset:setReset})[UI.setSec]();
+}
+const CATS = ["Presenza","Trasferta","Formazione","Congedo","Malattia","Riposo","Festività","Permesso","Altro"];
+function setCodici(){
+  const u = usage();
+  const cats = [...new Set([...CATS, ...S.config.codici.map(c=>c.categoria)])];
+  $("#setBody").innerHTML = `<div class="card"><h2>Codici</h2>
+    <p class="small muted" style="margin:0 0 10px">Ricavati dal tuo calendario. Rinominare un codice non cambia le giornate già registrate: restano collegate al codice. Un codice già usato si può solo disattivare.</p>
+    <div class="tscroll"><table class="codes"><tr><th>Colore</th><th>Nome</th><th>Sigla</th><th>Categoria</th><th title="Conta come giornata lavorata">Lavorativo</th><th title="Scala il saldo del congedo">Scala congedo</th><th>Valore</th><th>Attivo</th><th class="n">Usato</th><th></th></tr>
+    ${S.config.codici.map((c,i)=>`<tr data-i="${i}">
+      <td><input type="color" data-k="colore" value="${esc(c.colore)}" aria-label="Colore di ${esc(c.nome)}"></td>
+      <td><input type="text" data-k="nome" value="${esc(c.nome)}" aria-label="Nome"></td>
+      <td><input type="text" data-k="sigla" value="${esc(c.sigla||"")}" style="min-width:56px;width:64px" aria-label="Sigla"></td>
+      <td><select data-k="categoria" aria-label="Categoria">${cats.map(k=>`<option ${k===c.categoria?"selected":""}>${esc(k)}</option>`).join("")}</select></td>
+      <td><input type="checkbox" data-k="lavorativo" ${c.lavorativo?"checked":""} aria-label="Lavorativo"></td>
+      <td><input type="checkbox" data-k="scalaCongedo" ${c.scalaCongedo?"checked":""} aria-label="Scala congedo"></td>
+      <td><input type="number" data-k="valore" value="${c.valore??""}" step="0.5" style="width:58px" placeholder="—" aria-label="Valore"></td>
+      <td><input type="checkbox" data-k="attivo" ${c.attivo?"checked":""} aria-label="Attivo"></td>
+      <td class="n">${u[c.id]||0}</td>
+      <td><button class="btn sm danger" data-del="${i}" ${u[c.id]?"disabled title=\"Già usato: disattivalo invece di eliminarlo\"":""}>Elimina</button></td></tr>`).join("")}
+    </table></div>
+    <div class="row" style="margin-top:12px"><input type="text" id="newCode" placeholder="Nome del nuovo codice" class="grow" style="max-width:260px"><select id="newCat">${cats.map(k=>`<option>${esc(k)}</option>`).join("")}</select><button class="btn primary" id="addCode">Aggiungi codice</button></div>
+    <p class="small muted" style="margin:10px 0 0">Valore: quantità facoltativa associata al codice (ad esempio ore). Turno pomeridiano, straordinario e permesso si registrano dentro la giornata.</p></div>`;
+  $("#setBody").querySelectorAll("tr[data-i] [data-k]").forEach(inp=>inp.onchange=()=>{
+    const c = S.config.codici[+inp.closest("tr").dataset.i], k=inp.dataset.k;
+    if(inp.type==="checkbox") c[k]=inp.checked;
+    else if(k==="valore") { if(inp.value==="") delete c.valore; else c.valore=+inp.value; }
+    else if(k==="nome"){ if(!inp.value.trim()){ inp.value=c.nome; return; } c.nome=inp.value.trim(); }
+    else c[k]=inp.value;
+    Store.touch("config"); toast("Codice aggiornato");
+  });
+  $("#setBody").querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{ const i=+b.dataset.del; const c=S.config.codici[i]; if(usage()[c.id]) return; S.config.codici.splice(i,1); Store.touch("config"); setCodici(); toast(`Codice «${c.nome}» eliminato`); });
+  $("#addCode").onclick=()=>{ const n=$("#newCode").value.trim(); if(!n) return;
+    let id=slug(n), k=2; while(codeById(id)) id=slug(n)+"_"+k++;
+    const cat=$("#newCat").value;
+    S.config.codici.push({id, nome:n, categoria:cat, colore:"#6E7F91", lavorativo:["Presenza","Trasferta","Formazione"].includes(cat), attivo:true, scalaCongedo: cat==="Congedo"});
+    Store.touch("config"); setCodici(); toast(`Codice «${n}» aggiunto`); };
+}
+function setAnni(){
+  const ys = yearsList(true), next = Math.max(...ys)+1;
+  const rows = ys.map(y=>{ const g=S.anni[y]?.giorni||{}; const n=Object.values(g).filter(r=>r.codice).length; const a=S.config.anniArchiviati.includes(y);
+    const first = y===+S.config.dataInizio.slice(0,4) ? fmtDate(S.config.dataInizio) : fmtDate(ymd(y,1,1));
+    const leap = (y%4===0&&y%100!==0)||y%400===0;
+    return `<tr><td><b>${y}</b>${leap?` <span class="small muted">bisestile</span>`:""}</td><td>${first} → ${fmtDate(ymd(y,12,31))}</td><td class="n">${n}</td><td>${a?`<span class="pill">Archiviato</span>`:`<span class="pill" style="--c:var(--good)">Attivo</span>`}</td>
+    <td><button class="btn sm" data-arch="${y}">${a?"Ripristina":"Archivia"}</button></td></tr>`; }).join("");
+  const prevSp = S.config.parametri[next-1]?.congedoSpettante ?? "";
+  $("#setBody").innerHTML = `<div class="card"><h2>Anni</h2><div class="tscroll"><table><tr><th>Anno</th><th>Periodo</th><th class="n">Giornate registrate</th><th>Stato</th><th></th></tr>${rows}</table></div>
+    <p class="small muted" style="margin:10px 0 0">Un anno archiviato resta nei report e nei residui ma non compare nel calendario.</p></div>
+    <div class="card"><h2>Aggiungi anno</h2>
+    <p class="small muted" style="margin:0 0 10px">Il calendario del nuovo anno viene creato con i giorni e le settimane corrette. Le presenze dell'anno precedente non vengono copiate; i residui di congedo e permessi passano da soli all'anno nuovo.</p>
+    <div class="row"><label class="f">Anno<input type="number" id="nyY" value="${next}" style="width:100px"></label>
+    <label class="f">Congedo spettante (giorni)<input type="number" id="nySp" value="${esc(prevSp)}" min="0" style="width:130px"></label>
+    <label class="f">Permessi disponibili (ore)<input type="number" id="nyP" value="0" min="0" step="0.5" style="width:130px"></label>
+    <button class="btn primary" id="addYear" style="align-self:flex-end">Crea anno</button></div>
+    <p class="small muted" style="margin:8px 0 0">Il congedo spettante è precompilato con il valore dell'anno prima: controllalo con la tua busta paga prima di confermare.</p></div>`;
+  $("#setBody").querySelectorAll("[data-arch]").forEach(b=>b.onclick=()=>{ const y=+b.dataset.arch, A=S.config.anniArchiviati; const i=A.indexOf(y); if(i>=0) A.splice(i,1); else A.push(y); Store.touch("config"); setAnni(); });
+  $("#addYear").onclick=()=>{ const y=+$("#nyY").value; if(!(y>=2000&&y<=2100)){ toast("Inserisci un anno valido"); return; }
+    if(S.anni[y]){ toast(`L'anno ${y} esiste già`); return; }
+    if(ymd(y,12,31)<S.config.dataInizio){ toast("Il registro inizia il "+fmtDate(S.config.dataInizio)); return; }
+    S.anni[y]={giorni:{}}; S.config.parametri[y]={congedoSpettante:+$("#nySp").value||0, permessiOre:+$("#nyP").value||0, note:""};
+    Store.touch("anno:"+y); Store.touch("config"); setAnni(); toast(`Anno ${y} creato`); };
+}
+function setParametri(){
+  const ys=yearsList(true); UI.parY ||= +todayStr().slice(0,4); if(!ys.includes(UI.parY)) UI.parY=ys[ys.length-1];
+  const y=UI.parY, p = S.config.parametri[y] ||= {congedoSpettante:0, permessiOre:0, note:""};
+  const L=congedoLedger(), sy=+S.config.dataInizio.slice(0,4);
+  const ini = L.yearStart[y]||{};
+  const st = stats(ymd(y,1,1), ymd(y,12,31));
+  const resOggi = L.at(todayStr()<ymd(y,12,31)?todayStr():ymd(y,12,31));
+  const avvio = Object.entries(S.config.congedoAvvio).sort();
+  $("#setBody").innerHTML = `<div class="card"><div class="row" style="justify-content:space-between"><h2>Parametri annuali</h2>
+    <select id="parY" aria-label="Anno">${ys.map(v=>`<option ${v===y?"selected":""}>${v}</option>`).join("")}</select></div>
+    <div class="row" style="align-items:flex-end">
+      <label class="f">Congedo spettante ${y} (giorni)<input type="number" id="pSp" value="${p.congedoSpettante??0}" min="0" style="width:150px"></label>
+      <label class="f">Permessi disponibili ${y} (ore)<input type="number" id="pPe" value="${p.permessiOre??0}" min="0" step="0.5" style="width:150px"></label>
+    </div>
+    <label class="f" style="margin-top:10px">Note<input type="text" id="pNo" value="${esc(p.note||"")}"></label>
+    <p class="small muted" style="margin:10px 0 0">${y===sy?`Nel ${y} il registro parte dal ${fmtDate(S.config.dataInizio)}: il congedo disponibile a quella data è nei residui di avvio qui sotto.`:`Il congedo spettante viene accreditato il 1° gennaio ${y} e si somma ai residui degli anni precedenti.`}</p></div>
+  <div class="card"><h2>Calcolati per il ${y}</h2><dl class="kv">
+    <dt>Congedo disponibile a inizio ${y===sy?"registro":"anno"}</dt><dd>${tot(ini)} <span class="small muted">(${bucketsTxt(ini)})</span></dd>
+    <dt>Congedo usato nel ${y}</dt><dd>${st.congedo}</dd>
+    <dt>Congedo residuo ${todayStr()<ymd(y,12,31)?"oggi":"a fine anno"}</dt><dd>${tot(resOggi)} <span class="small muted">(${bucketsTxt(resOggi)})</span></dd>
+    <dt>Permessi usati / residui</dt><dd>${fmtHM(st.permessoMin)} / ${fmtHM((+p.permessiOre||0)*60-st.permessoMin)}</dd>
+    <dt>Straordinari ${y}</dt><dd>${fmtHM(st.straordMin)}</dd></dl>
+    <p class="small muted" style="margin:10px 0 0">Questi valori non si modificano a mano: derivano dalle giornate e dai parametri.</p></div>
+  <div class="card"><h2>Residui di congedo all'avvio del registro</h2>
+    <p class="small muted" style="margin:0 0 10px">Saldi al ${fmtDate(S.config.dataInizio)} per anno di maturazione, ricostruiti dalle annotazioni del tuo calendario (es. «64 congedo · 17 2024 · 18 2025 · 29 2026»).</p>
+    <div class="row">${avvio.map(([k,v])=>`<label class="f">Congedo ${esc(k)}<input type="number" data-av="${esc(k)}" value="${v}" style="width:110px"></label>`).join("")}
+    <label class="f">Aggiungi anno<input type="number" id="avNew" placeholder="es. 2023" style="width:110px"></label></div></div>`;
+  $("#parY").onchange=e=>{ UI.parY=+e.target.value; setParametri(); };
+  const upd=(k,v)=>{ p[k]=v; Store.touch("config"); setParametri(); toast("Parametri aggiornati"); };
+  $("#pSp").onchange=e=>upd("congedoSpettante", +e.target.value||0);
+  $("#pPe").onchange=e=>upd("permessiOre", +e.target.value||0);
+  $("#pNo").onchange=e=>{ p.note=e.target.value; Store.touch("config"); };
+  $("#setBody").querySelectorAll("[data-av]").forEach(i=>i.onchange=()=>{ const v=+i.value||0; if(v===0) delete S.config.congedoAvvio[i.dataset.av]; else S.config.congedoAvvio[i.dataset.av]=v; Store.touch("config"); setParametri(); });
+  $("#avNew").onchange=e=>{ const k=String(+e.target.value); if(+k>1990 && !(k in S.config.congedoAvvio)){ S.config.congedoAvvio[k]=0; setParametri(); } };
+}
+
+/* ---------- backup ---------- */
+function exportObj(){ return { formato:"registro-presenze", versione:1, esportatoIl:new Date().toISOString(), config:S.config, anni:S.anni, meta:S.meta }; }
+function isBackup(d){ const x=d&&(d.dati||d); return x && x.config && x.anni && Array.isArray(x.config.codici); }
+async function saveFile(name, data, mime){
+  if(Store.downloads){ try{ await Store.downloads.save({filename:name, data}); return true; }catch(e){ if(e&&e.code==="declined") return false; } }
+  try{ const blob = data instanceof Blob ? data : new Blob([data],{type:mime}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500); return true; }
+  catch(e){ toast("Il download non è disponibile in questa finestra."); return false; }
+}
+const stamp = ()=>todayStr().replaceAll("-","");
+async function exportJSON(){
+  const ok = await saveFile(`registro-presenze-backup-${stamp()}.json`, JSON.stringify(exportObj(),null,1), "application/json");
+  if(ok){ S.meta.ultimaEsportazione=new Date().toISOString(); Store.touch("config"); toast("Backup esportato"); if(UI.tab==="impostazioni") renderSettings(); }
+}
+function setBackup(){
+  const cloud = Store.mode==="cloud";
+  $("#setBody").innerHTML = `<div class="card"><h2>Backup e dati</h2>
+    <p class="notice ${cloud?"":"warn"}" style="margin:0 0 12px">${cloud?"I dati sono salvati nel cloud del tuo account e si sincronizzano su tutti i dispositivi da cui apri l'app. Un backup ogni tanto resta comunque una buona abitudine.":"<b>I dati sono salvati solo su questo dispositivo, in questo browser.</b> Se svuoti i dati del browser o cambi telefono li perdi: esporta un backup regolarmente."}</p>
+    <div class="row"><button class="btn primary" id="bExp">📥 Esporta backup</button>
+    <label class="btn">📤 Importa backup<input type="file" id="bImp" accept=".json,application/json" hidden></label></div>
+    <p class="small muted" style="margin:10px 0 0">Il backup (JSON) contiene anni, giornate, codici, congedo, permessi, straordinari, note, parametri annuali e preferenze. Ultima esportazione: ${S.meta.ultimaEsportazione?fmtDate(S.meta.ultimaEsportazione.slice(0,10)):"mai"}.</p>
+    <div id="bConfirm"></div></div>
+    <div class="card"><h2>Backup automatico</h2><p class="small muted" style="margin:0 0 10px">Prima di ogni ripristino o reset l'app salva una copia dei dati del momento. Puoi tornare a quella copia qui.</p>
+    <div id="autoBak" class="small muted">Controllo…</div></div>`;
+  $("#bExp").onclick=exportJSON;
+  $("#bImp").onchange=async e=>{ const f=e.target.files[0]; if(!f) return; let d; try{ d=JSON.parse(await f.text()); }catch(err){ d=null; }
+    if(!isBackup(d)){ $("#bConfirm").innerHTML=`<p class="notice bad" style="margin:12px 0 0">Questo file non è un backup del Registro presenze.</p>`; return; }
+    const x=d.dati||d; const nG=Object.values(x.anni).reduce((s,a)=>s+Object.keys(a.giorni||{}).length,0);
+    confirmBox("#bConfirm", `Il ripristino sostituirà i dati attualmente presenti. Vuoi continuare?<br><span class="small">Il file contiene ${Object.keys(x.anni).length} anni e ${nG} giornate${x.esportatoIl?`, esportato il ${fmtDate(x.esportatoIl.slice(0,10))}`:""}. Prima del ripristino salvo in automatico una copia dei dati attuali.</span>`,
+      "Ripristina", async ()=>{ await Store.saveAutoBackup(); await Store.replaceAll(x); toast("Backup ripristinato"); render(); }); };
+  Store.readAutoBackup().then(b=>{ const el=$("#autoBak"); if(!el) return;
+    if(!b){ el.textContent="Nessuna copia automatica per ora."; return; }
+    el.innerHTML=`Copia del ${esc(fmtDate(b.salvatoIl.slice(0,10)))} alle ${esc(b.salvatoIl.slice(11,16))} UTC. <button class="btn sm" id="useAuto">Torna a questa copia</button><div id="autoConf"></div>`;
+    $("#useAuto").onclick=()=>confirmBox("#autoConf","Il ripristino sostituirà i dati attualmente presenti. Vuoi continuare?","Ripristina", async ()=>{ const cur=exportObj(); await Store.replaceAll(b.dati); if(Store.mode==="cloud"){ try{ await Store.db.doc("backup/automatico").set({salvatoIl:new Date().toISOString(), dati:cur}); }catch(e){} } else { try{ localStorage.setItem(LS_BAK, JSON.stringify({salvatoIl:new Date().toISOString(), dati:cur})); }catch(e){} } toast("Copia ripristinata"); render(); }); });
+}
+function confirmBox(sel, html, okLabel, onOk){
+  $(sel).innerHTML = `<div class="notice warn" style="margin-top:12px"><p style="margin:0 0 10px">${html}</p><div class="row"><button class="btn" data-cx>Annulla</button><button class="btn" data-bk>Scarica prima un backup</button><button class="btn danger solid" data-ok>${esc(okLabel)}</button></div></div>`;
+  $(sel+" [data-cx]").onclick=()=>$(sel).innerHTML="";
+  $(sel+" [data-bk]").onclick=exportJSON;
+  $(sel+" [data-ok]").onclick=async ()=>{ $(sel+" [data-ok]").disabled=true; try{ await onOk(); }catch(e){ toast("Operazione non riuscita: riprova."); } };
+}
+
+/* ---------- Excel / CSV ---------- */
+let xlsxP=null;
+function loadXLSX(){ return xlsxP ||= new Promise((res,rej)=>{ if(window.XLSX) return res(window.XLSX); const s=document.createElement("script"); s.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"; s.onload=()=>res(window.XLSX); s.onerror=()=>{xlsxP=null;rej(new Error("xlsx"));}; document.head.appendChild(s); }); }
+function giornateRows(){
+  const out=[]; const ys=Object.keys(S.anni).sort();
+  for(const y of ys) for(const ds of Object.keys(S.anni[y].giorni).sort()){
+    const r=S.anni[y].giorni[ds], c=codeById(r.codice);
+    out.push({ Data:fmtDate(ds), Giorno:GIORNI[dow(ds)], Codice:c?c.nome:(r.codice||""), Categoria:c?c.categoria:"",
+      "Turno pomeridiano":r.turno?"Sì":"", "Straordinario (h:mm)":r.straordinarioMin?fmtHM(r.straordinarioMin):"", "Straordinario (min)":r.straordinarioMin||"",
+      "Permesso (h:mm)":r.permessoMin?fmtHM(r.permessoMin):"", "Permesso (min)":r.permessoMin||"", Attività:r.dettaglio||"", Mezzi:(r.mezzi||[]).join(", "), Note:r.note||"", Origine:r.origine||"" });
+  }
+  return out;
+}
+async function exportCSV(){
+  const rows=giornateRows(); const cols=Object.keys(rows[0]||{Data:""});
+  const q=v=>{ v=String(v??""); return /[;"\n]/.test(v)?`"${v.replace(/"/g,'""')}"`:v; };
+  const csv="﻿"+[cols.join(";"),...rows.map(r=>cols.map(c=>q(r[c])).join(";"))].join("\r\n");
+  if(await saveFile(`registro-presenze-${stamp()}.csv`, csv, "text/csv")){ S.meta.ultimaEsportazione=new Date().toISOString(); Store.touch("config"); toast("CSV esportato"); }
+}
+async function exportXLSX(){
+  let X; try{ X=await loadXLSX(); }catch(e){ toast("Impossibile caricare il modulo Excel: controlla la connessione."); return; }
+  const wb=X.utils.book_new();
+  const L=congedoLedger();
+  // Riepilogo mensile
+  const rie=[]; for(const y of yearsList(true)) for(let m=1;m<=12;m++){ const a=ymd(y,m,1), b=ymd(y,m,dim(y,m)); if(b<S.config.dataInizio) continue; const st=stats(a,b); if(a>todayStr() && !st.registrate) continue;
+    rie.push({Anno:y, Mese:MESI[m-1], "Giornate lavorate":st.lavorate, Trasferte:st.trasferte, Congedo:st.congedo, Malattia:st.malattia, "Straordinario (h:mm)":fmtHM(st.straordMin), "Permessi (h:mm)":fmtHM(st.permessoMin), "Turni pomeridiani":st.turniPom, "Congedo residuo a fine mese":tot(L.at(b<todayStr()?b:todayStr()))}); }
+  X.utils.book_append_sheet(wb, X.utils.json_to_sheet(rie), "Riepilogo mensile");
+  // Griglia per anno, come il registro cartaceo
+  for(const y of yearsList(true)){
+    const aoa=[[`REGISTRO PRESENZE ${y}`],[],["Mese",...Array.from({length:31},(_,i)=>i+1)]];
+    for(let m=1;m<=12;m++){ const row=[MESI[m-1]], row2=["  turno / straord."];
+      for(let d=1;d<=31;d++){ if(d>dim(y,m)){row.push("");row2.push("");continue;} const ds=ymd(y,m,d); const ec=effCode(ds); const r=dayRec(ds)||{};
+        row.push(ds<S.config.dataInizio?"":ec?(codeById(ec.id)?.nome||ec.id):""); row2.push([r.turno?"POM":"", r.straordinarioMin?"+"+fmtHM(r.straordinarioMin):""].filter(Boolean).join(" ")); }
+      aoa.push(row,row2); }
+    const ws=X.utils.aoa_to_sheet(aoa); ws["!cols"]=[{wch:16},...Array(31).fill({wch:11})];
+    X.utils.book_append_sheet(wb, ws, `Registro ${y}`);
+  }
+  X.utils.book_append_sheet(wb, X.utils.json_to_sheet(giornateRows()), "Giornate");
+  X.utils.book_append_sheet(wb, X.utils.json_to_sheet(S.config.codici.map(c=>({Codice:c.id, Nome:c.nome, Sigla:c.sigla||"", Categoria:c.categoria, Colore:c.colore, Lavorativo:c.lavorativo?"Sì":"No", "Scala congedo":c.scalaCongedo?"Sì":"No", Valore:c.valore??"", Attivo:c.attivo?"Sì":"No"}))), "Codici");
+  X.utils.book_append_sheet(wb, X.utils.json_to_sheet(Object.entries(S.config.parametri).sort().map(([y,p])=>({Anno:+y, "Congedo spettante":p.congedoSpettante||0, "Permessi disponibili (ore)":p.permessiOre||0, Note:p.note||""}))), "Parametri");
+  const buf = X.write(wb,{bookType:"xlsx",type:"array"});
+  if(await saveFile(`registro-presenze-${stamp()}.xlsx`, new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")){ S.meta.ultimaEsportazione=new Date().toISOString(); Store.touch("config"); toast("Excel esportato"); }
+}
+function findCode(v){ v=String(v||"").trim(); if(!v) return null; const l=v.toLowerCase(); return S.config.codici.find(c=>c.id.toLowerCase()===l||c.nome.toLowerCase()===l||(c.sigla||"").toLowerCase()===l)||null; }
+function parseDateCell(v, X){
+  if(typeof v==="number"){ const o=X.SSF.parse_date_code(v); return o?ymd(o.y,o.m,o.d):null; }
+  v=String(v||"").trim(); let m;
+  if(m=v.match(/^(\d{4})-(\d{2})-(\d{2})/)) return `${m[1]}-${m[2]}-${m[3]}`;
+  if(m=v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)) return ymd(+m[3],+m[2],+m[1]);
+  return null;
+}
+async function analyzeExcel(file){
+  const X=await loadXLSX(); const wb=X.read(await file.arrayBuffer(),{type:"array"});
+  const recs={}, unknown={}, years=new Set();
+  const hmToMin = v=>{ if(v===""||v==null) return 0; if(typeof v==="number") return Math.round(v); const m=String(v).match(/^(\d+):(\d{2})$/); return m?(+m[1]*60+ +m[2]):Math.round(+v||0); };
+  if(wb.Sheets["Giornate"]){ // formato esportato dall'app
+    for(const r of X.utils.sheet_to_json(wb.Sheets["Giornate"],{defval:""})){
+      const ds=parseDateCell(r.Data,X); if(!ds) continue; const n={};
+      if(r.Codice){ const c=findCode(r.Codice); if(c) n.codice=c.id; else { unknown[r.Codice]=(unknown[r.Codice]||0)+1; n._ignoto=String(r.Codice); } }
+      if(String(r["Turno pomeridiano"]).toLowerCase().startsWith("s")) n.turno="pomeriggio";
+      const om=hmToMin(r["Straordinario (min)"]!==""?r["Straordinario (min)"]:r["Straordinario (h:mm)"]); if(om) n.straordinarioMin=om;
+      const pm=hmToMin(r["Permesso (min)"]!==""?r["Permesso (min)"]:r["Permesso (h:mm)"]); if(pm) n.permessoMin=pm;
+      if(r["Attività"]){ n.dettaglio=String(r["Attività"]); const mz=estraiMezzi(n.dettaglio); if(mz.length) n.mezzi=mz; }
+      if(r.Note) n.note=String(r.Note);
+      n.origine="importato da Excel"; recs[ds]=n; years.add(ds.slice(0,4));
+    }
+  } else { // formato «Registro presenze» a blocchi mensili
+    for(const name of wb.SheetNames){
+      const aoa=X.utils.sheet_to_json(wb.Sheets[name],{header:1,defval:"",raw:true});
+      for(let i=0;i<aoa.length;i++){
+        const row=aoa[i]; const mi=row.findIndex(c=>typeof c==="string"&&MESI.map(m=>m.toUpperCase()).includes(c.trim().toUpperCase()));
+        if(mi<0) continue;
+        const dr=aoa[i+2]||[], cr=aoa[i+3]||[], cr2=aoa[i+4]||[];
+        for(let j=0;j<dr.length;j++){ if(typeof dr[j]!=="number"||dr[j]<20000) continue; const ds=parseDateCell(dr[j],X); if(!ds) continue;
+          for(const cell of [cr[j],cr2[j]]){ const v=String(cell||"").trim(); if(!v) continue; const c=findCode(v);
+            const n=recs[ds]||={origine:"importato da Excel"};
+            if(c){ if(!n.codice) n.codice=c.id; } else { unknown[v]=(unknown[v]||0)+1; if(!n._ignoto) n._ignoto=v; } years.add(ds.slice(0,4)); } }
+      }
+    }
+  }
+  const conflicts=[]; for(const [ds,n] of Object.entries(recs)){ const o=dayRec(ds); if(o&&o.codice&&n.codice&&o.codice!==n.codice) conflicts.push(ds); }
+  const before=Object.keys(recs).filter(ds=>ds<S.config.dataInizio);
+  return {recs, unknown, years:[...years].sort(), conflicts, before};
+}
+function setExcel(){
+  $("#setBody").innerHTML = `<div class="card"><h2>Esporta</h2>
+    <p class="small muted" style="margin:0 0 10px">L'Excel contiene il riepilogo mensile, una griglia per anno simile al registro cartaceo, l'elenco delle giornate, i codici e i parametri. Il CSV contiene l'elenco delle giornate.</p>
+    <div class="row"><button class="btn primary" id="xExp">📊 Esporta Excel</button><button class="btn" id="cExp">Esporta CSV</button></div></div>
+  <div class="card"><h2>Importa Excel</h2>
+    <p class="small muted" style="margin:0 0 10px">Accetta un Excel esportato da questa app oppure un file nel formato «Registro presenze» a blocchi mensili. Prima di importare vedi cosa contiene e decidi tu.</p>
+    <label class="btn">📊 Scegli file Excel<input type="file" id="xImp" accept=".xlsx,.xls" hidden></label>
+    <div id="xPrev"></div></div>`;
+  $("#xExp").onclick=exportXLSX; $("#cExp").onclick=exportCSV;
+  $("#xImp").onchange=async e=>{ const f=e.target.files[0]; if(!f) return; $("#xPrev").innerHTML=`<p class="small muted">Analisi del file…</p>`;
+    let A; try{ A=await analyzeExcel(f); }catch(err){ $("#xPrev").innerHTML=`<p class="notice bad" style="margin-top:12px">Non riesco a leggere questo file. Controlla che sia un .xlsx valido.</p>`; return; }
+    const n=Object.keys(A.recs).length, unk=Object.entries(A.unknown);
+    if(!n){ $("#xPrev").innerHTML=`<p class="notice warn" style="margin-top:12px">Non ho trovato giornate registrate in questo file.</p>`; return; }
+    $("#xPrev").innerHTML=`<div class="notice" style="margin-top:12px"><dl class="kv" style="margin:0 0 10px">
+      <dt>Anni trovati</dt><dd>${A.years.length} (${A.years.join(", ")})</dd><dt>Giornate con dati</dt><dd>${n}</dd>
+      <dt>Conflitti con giornate già registrate</dt><dd class="${A.conflicts.length?"warn":""}">${A.conflicts.length}</dd>
+      <dt>Giornate prima dell'inizio del registro</dt><dd>${A.before.length} (verranno ignorate)</dd>
+      <dt>Codici non riconosciuti</dt><dd class="${unk.length?"warn":""}">${unk.length}</dd></dl>
+      ${unk.length?`<p class="small" style="margin:0 0 8px">Non riconosciuti: ${unk.map(([k,v])=>`<b>${esc(k)}</b> (${v})`).join(", ")}</p><label class="switch small"><input type="checkbox" id="xNew"> Crea questi codici (categoria «Altro»); altrimenti quelle giornate restano senza codice</label>`:""}
+      ${A.conflicts.length?`<label class="switch small" style="margin-top:6px"><input type="checkbox" id="xOver"> Sovrascrivi le ${A.conflicts.length} giornate in conflitto (altrimenti tengo le mie)</label>`:""}
+      <div class="row" style="margin-top:10px"><button class="btn" id="xNo">Annulla</button><button class="btn primary" id="xYes">Importa ${n-A.before.length} giornate</button></div></div>`;
+    $("#xNo").onclick=()=>$("#xPrev").innerHTML="";
+    $("#xYes").onclick=async ()=>{
+      await Store.saveAutoBackup();
+      const mk=$("#xNew")?.checked, over=$("#xOver")?.checked; let k=0;
+      if(mk) for(const [name] of unk){ if(!findCode(name)){ let id=slug(name),i=2; while(codeById(id)) id=slug(name)+"_"+i++; S.config.codici.push({id,nome:name,categoria:"Altro",colore:"#6E7F91",lavorativo:false,attivo:true}); } }
+      for(const [ds,n0] of Object.entries(A.recs)){ if(ds<S.config.dataInizio) continue; const n=clone(n0);
+        if(n._ignoto){ const c=mk?findCode(n._ignoto):null; if(c) n.codice=c.id; delete n._ignoto; }
+        const y=ds.slice(0,4); S.anni[y] ||= {giorni:{}}; S.config.parametri[y] ||= {congedoSpettante:0,permessiOre:0,note:""};
+        const o=S.anni[y].giorni[ds]; if(o&&o.codice&&!over){ if(!Object.keys(n).some(key=>key!=="origine"&&key!=="codice"&&!o[key])) continue; S.anni[y].giorni[ds]={...n,...o}; }
+        else S.anni[y].giorni[ds]= o? {...o,...n} : n;
+        Store.touch("anno:"+y); k++; }
+      Store.touch("config"); $("#xPrev").innerHTML=`<p class="notice" style="margin-top:12px">Importate ${k} giornate. Una copia dei dati precedenti è nel backup automatico.</p>`;
+    };
+  };
+}
+
+/* ---------- gestione dati ---------- */
+function setDati(){
+  const ys=yearsList(true); const nG=Object.values(S.anni).reduce((s,a)=>s+Object.values(a.giorni).filter(r=>r.codice||r.turno).length,0);
+  const L=congedoLedger(), ver=verificaCongedo(L), ko=ver.filter(v=>!v.ok);
+  const excl = S.meta.esclusi||[];
+  $("#setBody").innerHTML = `<div class="card"><h2>Gestione dati</h2><div class="stats">
+    <div class="tile"><span>Anni</span><b>${ys.length}</b></div><div class="tile"><span>Giornate registrate</span><b>${nG}</b></div>
+    <div class="tile"><span>Codici</span><b>${S.config.codici.length}</b><small>${S.config.codici.filter(c=>c.attivo).length} attivi</small></div>
+    <div class="tile"><span>Primo giorno</span><b style="font-size:24px">${fmtDate(S.config.dataInizio)}</b></div></div>
+    <dl class="kv" style="margin-top:14px"><dt>Ultima modifica</dt><dd>${S.meta.ultimaModifica?new Date(S.meta.ultimaModifica).toLocaleString("it-IT"):"—"}</dd>
+    <dt>Ultima esportazione</dt><dd>${S.meta.ultimaEsportazione?new Date(S.meta.ultimaEsportazione).toLocaleString("it-IT"):"mai"}</dd>
+    <dt>Dove sono salvati</dt><dd>${Store.mode==="cloud"?"Cloud del tuo account (sincronizzati)":"Solo questo browser"}</dd>
+    <dt>Sincronizzazione</dt><dd class="${Store.status==="ok"?"ok":Store.status==="pending"?"warn":"bad"}">${Store.mode==="cloud"?(Store.status==="ok"?"🟢 Dati sincronizzati":Store.status==="pending"?"🟠 Modifiche non sincronizzate":"🔴 Errore sincronizzazione"):"Non prevista: dati locali"}</dd>
+    ${S.meta.importatoIl?`<dt>Import dal calendario</dt><dd>${fmtDate(S.meta.importatoIl)}</dd>`:""}</dl></div>
+  <div class="card"><h2>Controlli</h2>
+    <p style="margin:0 0 8px">${ver.length?`Residui di congedo annotati nel calendario: <b class="${ko.length?"bad":"ok"}">${ver.length-ko.length} su ${ver.length} coincidono</b> con il calcolo dell'app.`:"Nessun residuo annotato da confrontare."}</p>
+    ${ko.length?`<div class="tscroll"><table><tr><th>Data</th><th>Calendario</th><th>App</th><th>Da cosa deriva</th></tr>${ko.map(v=>`<tr><td>${fmtDate(v.ds)}</td><td>${v.exp.totale}${Object.keys(v.exp.perAnno||{}).length?` (${bucketsTxt(v.exp.perAnno)})`:""}</td><td>${tot(v.calc)} (${bucketsTxt(v.calc)})</td><td class="small">${spiegaDiff(v)}</td></tr>`).join("")}</table></div>
+    <p class="small muted" style="margin:8px 0 0">Le differenze non vengono corrette in automatico.</p>`:""}
+    ${excl.length?`<p class="small muted" style="margin:8px 0 0">Esclusi dall'import perché non sono giornate di lavoro: ${excl.map(e=>`${fmtDate(e.data)} «${esc(e.titolo)}»`).join(", ")}. Esclusi anche i compleanni.</p>`:""}</div>`;
+}
+function spiegaDiff(v){
+  const y=v.ds.slice(0,4), sp=+(S.config.parametri[y]?.congedoSpettante||0), d=tot(v.calc)-v.exp.totale;
+  if(sp && d===sp && !(y in (v.exp.perAnno||{})))
+    return `L'app accredita i ${sp} giorni del ${y} il 1° gennaio; nel calendario compaiono solo da un'annotazione successiva. Senza il ${y} i totali coincidono.`;
+  return `Differenza di ${d>0?"+":""}${d} giorni: controlla le giornate di congedo precedenti o i residui di avvio.`;
+}
+function setGenerali(){
+  const p=S.config.preferenze;
+  $("#setBody").innerHTML = `<div class="card"><h2>Aspetto</h2><div class="row" role="radiogroup" aria-label="Tema">
+    ${[["auto","Automatico"],["light","Chiaro"],["dark","Scuro"]].map(([k,n])=>`<button class="btn ${p.tema===k?"primary":""}" data-th="${k}">${n}</button>`).join("")}</div></div>
+  <div class="card"><h2>Preferenze</h2><div class="row" style="align-items:flex-end">
+    <label class="f">Primo giorno della settimana<select id="gFd"><option value="1" ${p.primoGiorno!==0?"selected":""}>Lunedì</option><option value="0" ${p.primoGiorno===0?"selected":""}>Domenica</option></select></label>
+    <label class="f">Formato data<select id="gDf"><option value="gg/mm/aaaa" ${p.formatoData!=="aaaa-mm-gg"?"selected":""}>30/09/2026</option><option value="aaaa-mm-gg" ${p.formatoData==="aaaa-mm-gg"?"selected":""}>2026-09-30</option></select></label></div>
+    <label class="switch" style="margin-top:12px"><input type="checkbox" id="gSun" ${S.config.domenicaRiposo?"checked":""}> Domeniche senza registrazione = Riposo automatico</label>
+    <label class="switch" style="margin-top:6px"><input type="checkbox" id="gPq" ${S.config.pasquetta?"checked":""}> Lunedì di Pasqua festivo</label>
+    <label class="f" style="margin-top:10px">Festività nazionali (giorno-mese, separate da virgola)<input type="text" id="gFe" value="${esc(S.config.festivita.map(x=>x.slice(3)+"/"+x.slice(0,2)).join(", "))}"></label>
+    <p class="small muted" style="margin:8px 0 0">Domeniche e festività vengono segnate in automatico (tratteggiate) solo se la giornata non ha un codice: se hai lavorato, il tuo codice ha la precedenza.</p></div>`;
+  $("#setBody").querySelectorAll("[data-th]").forEach(b=>b.onclick=()=>{ p.tema=b.dataset.th; if(p.tema==="auto") document.documentElement.removeAttribute("data-theme"); Store.touch("config"); render(); });
+  $("#gFd").onchange=e=>{ p.primoGiorno=+e.target.value; Store.touch("config"); };
+  $("#gDf").onchange=e=>{ p.formatoData=e.target.value; Store.touch("config"); render(); };
+  $("#gSun").onchange=e=>{ S.config.domenicaRiposo=e.target.checked; Store.touch("config"); };
+  $("#gPq").onchange=e=>{ S.config.pasquetta=e.target.checked; Store.touch("config"); };
+  $("#gFe").onchange=e=>{ const v=e.target.value.split(/[,;\s]+/).map(s=>s.match(/^(\d{1,2})\/(\d{1,2})$/)).filter(Boolean).map(m=>`${pad(m[2])}-${pad(m[1])}`); S.config.festivita=[...new Set(v)].sort(); Store.touch("config"); setGenerali(); toast("Festività aggiornate"); };
+}
+function setReset(){
+  $("#setBody").innerHTML = `<div class="card"><h2>⚠️ Ripristina applicazione</h2>
+    <p style="margin:0 0 12px">Riporta il registro allo stato iniziale. Puoi scegliere se ricaricare i dati importati dal tuo calendario il 30/09/2026 oppure partire da un registro vuoto. Codici e parametri tornano quelli iniziali.</p>
+    <div id="rs"><button class="btn danger" id="r1">Voglio ripristinare l'applicazione</button></div></div>`;
+  $("#r1").onclick=()=>{ $("#rs").innerHTML=`<div class="notice warn"><p style="margin:0 0 10px"><b>Passo 1 di 2.</b> Tutte le modifiche fatte dopo l'import andranno perse. Ti consiglio di scaricare prima un backup.</p>
+    <div class="row"><button class="btn" id="rBk">📥 Scarica backup</button><button class="btn" id="rNo">Annulla</button><button class="btn danger" id="r2">Continua</button></div></div>`;
+    $("#rBk").onclick=exportJSON; $("#rNo").onclick=setReset;
+    $("#r2").onclick=()=>{ $("#rs").innerHTML=`<div class="notice bad"><p style="margin:0 0 10px"><b>Passo 2 di 2.</b> Scrivi <b>RIPRISTINA</b> per confermare.</p>
+      <div class="row"><input type="text" id="rTxt" autocomplete="off" aria-label="Conferma"><select id="rMode"><option value="seed">Ricarica i dati del calendario</option><option value="empty">Registro vuoto</option></select>
+      <button class="btn" id="rNo2">Annulla</button><button class="btn danger solid" id="r3" disabled>Ripristina ora</button></div></div>`;
+      $("#rTxt").oninput=e=>$("#r3").disabled=e.target.value.trim()!=="RIPRISTINA";
+      $("#rNo2").onclick=setReset;
+      $("#r3").onclick=async ()=>{ $("#r3").disabled=true; await Store.saveAutoBackup(); const seed=await fetchSeed();
+        let d;
+        if($("#rMode").value==="seed"){ if(!seed){ toast("Dati iniziali non disponibili: ripristina un backup."); $("#r3").disabled=false; return; } d=seed; }
+        else { d = seed ? {config:seed.config, anni:{}, meta:{}} : {config:S.config, anni:{}, meta:{}}; d.config=clone(d.config); }
+        await Store.replaceAll(d); toast("Applicazione ripristinata"); UI.setSec="dati"; render(); };
+    };
+  };
+}
+
+/* ============================ avvio ============================ */
+(async function boot(){
+  const h = location.hash.slice(1); if(["calendario","report","impostazioni"].includes(h)) UI.tab=h;
+  try{ await Store.init(); }catch(e){ S=null; Store.setStatus("err","Impossibile leggere i dati: ricarica la pagina."); }
+  Store.setStatus(Store.status);
+  render();
+})();
+addEventListener("hashchange", ()=>{ const h=location.hash.slice(1); if(["calendario","report","impostazioni"].includes(h) && h!==UI.tab){ UI.tab=h; render(); } });
+addEventListener("pagehide", ()=>{ if(Store.dirty.size) Store.flush(); });
+</script>
