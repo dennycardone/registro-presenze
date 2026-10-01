@@ -22,7 +22,7 @@
   --bg:#EDF0F3; --surface:#FFFFFF; --surface-2:#F6F8FA; --ink:#15202B; --ink-2:#465463; --muted:#76818F;
   --line:#D6DDE4; --accent:#1D5C96; --accent-ink:#FFFFFF; --accent-soft:#DCE8F4;
   --good:#23794A; --warn:#A2640F; --bad:#B8362B; --today:#E0A526;
-  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-display:"Barlow Condensed","Roboto Condensed","sans-serif-condensed","Arial Narrow","DejaVu Sans Condensed",sans-serif;
   --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --r:10px; --nav-h:62px;
   color-scheme:light;
@@ -98,34 +98,24 @@ td.n,th.n{text-align:right}
 .stack{display:flex;flex-direction:column;gap:14px}
 
 /* calendar */
-.calbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.calbar{display:grid;grid-template-columns:auto minmax(0,.8fr) minmax(0,1.5fr) minmax(0,1fr);gap:6px;margin-bottom:8px;max-width:620px;margin-inline:auto}
+.calbar select,.calbar .btn{width:100%;min-width:0;height:42px;font-size:15px;justify-content:center}
+.calbar .btn{padding:0 14px;font-weight:600}
+.filtrobar{max-width:620px;margin:0 auto 8px}
+.filtrobar select{width:100%;height:40px}
 .months{display:flex;gap:4px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px;scrollbar-width:thin}
 .months button{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 10px;font-size:13.5px;flex:none;color:var(--ink-2)}
 .months button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg);font-weight:600}
 .months button:disabled{opacity:.35}
-.monthhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.calcard{padding:12px}
+.monthhead{display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px;margin-bottom:10px}
 .monthhead h2{font-size:30px;text-transform:uppercase;letter-spacing:.03em;font-weight:700}
-.monthhead h2 small{font-size:22px;color:var(--muted);font-weight:500}
-.yearstrip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px}
-.yearstrip div{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:8px 10px;min-width:0}
-.yearstrip b{display:block;font-family:var(--f-display);font-size:24px;font-weight:600;line-height:1.1}
-.yearstrip span{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
-@media (max-width:560px){
-  .yearstrip{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
-  .yearstrip div{padding:6px 9px}
-  .yearstrip b{font-size:20px}
-  .brand h1{font-size:20px}.brand span{display:none}
-  .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:15;background:var(--bg);padding-block:8px;margin-bottom:4px}
-  .sync{padding:3px 8px;font-size:11.5px}
-  .calbar{gap:6px}
-  .calbar .datebtn{flex:1 1 140px;justify-content:center}
-  .calbar select#filtro{flex:1 1 100%;max-width:none!important}
-  .card{padding:12px}
-  .monthhead h2{font-size:26px}
-}
+.monthhead h2 small{font-size:24px;color:var(--muted);font-weight:500}
+.msum{font-size:13px;color:var(--muted)}
 .grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
-.wd{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);text-align:center;font-weight:600;padding:2px 0}
-.day{position:relative;min-height:78px;border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:5px;text-align:left;display:flex;flex-direction:column;gap:3px;min-width:0;overflow:hidden}
+.wd{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);text-align:center;font-weight:700;padding:2px 0}
+.wd.sun{color:var(--bad)}
+.day{position:relative;min-height:84px;border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:5px;text-align:left;display:flex;flex-direction:column;gap:2px;min-width:0;overflow:hidden}
 .day.coded{background:color-mix(in srgb,var(--c) 13%,var(--surface));border-color:color-mix(in srgb,var(--c) 35%,var(--line))}
 .day.auto{background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--c) 9%,var(--surface)) 0 6px,var(--surface) 6px 12px)}
 .day.out{opacity:.35;cursor:default;background:transparent;border-style:dashed}
@@ -134,22 +124,29 @@ td.n,th.n{text-align:right}
 .day .num{font-family:var(--f-display);font-size:19px;font-weight:600;line-height:1}
 .day.sun .num{color:var(--bad)}
 .day.today{box-shadow:inset 0 0 0 2px var(--today)}
-.day .code{font-size:11.5px;font-weight:600;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:4px}
-.day .det{font-size:11px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.day .tags{display:flex;gap:3px;flex-wrap:wrap;margin-top:auto}
+.day .code{font-family:var(--f-display);font-stretch:condensed;font-size:14px;font-weight:600;line-height:1.05;hyphens:auto;-webkit-hyphens:auto}
+.day .det{font-size:11px;line-height:1.15;color:var(--ink-2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.day .tags{display:flex;gap:2px;flex-wrap:wrap;margin-top:auto}
 .tag{font-size:10px;font-weight:600;padding:1px 5px;border-radius:4px;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-2);line-height:1.3}
 .tag.pm{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .tag.ot{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,var(--line))}
 @media (max-width:560px){
-  .grid{gap:3px}
-  .day{min-height:64px;padding:4px 3px}
-  .day .det{font-size:9.5px;line-height:1.15;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
-  .day .code{font-size:10px}
-  .day .num{font-size:16px}
-  .tag{font-size:9px;padding:0 3px}
+  .calbar{grid-template-columns:auto minmax(0,1fr) minmax(0,1.3fr) minmax(0,.95fr);gap:5px}
+  .calbar select,.calbar .btn{font-size:13.5px;height:40px;padding-inline:5px}
+  .calbar .btn{padding-inline:10px}
+  .months button{padding:5px 9px;font-size:13px}
+  .calcard{margin-inline:-14px;border-radius:0;border-left:0;border-right:0;padding:10px 2px}
+  .monthhead h2{font-size:24px}
+  .monthhead h2 small{font-size:20px}
+  .msum{font-size:12px}
+  .grid{gap:2px}
+  .day{min-height:78px;padding:3px 2px;border-radius:6px}
+  .day .num{font-size:15px}
+  .day .code{font-size:11px;letter-spacing:-.1px;line-height:1.05}
+  .day .det{font-size:8.5px;line-height:1.1;letter-spacing:-.1px}
+  .tag{font-size:8.5px;padding:0 2px;border-radius:3px}
+  .card{padding:12px}
 }
-.datebtn{position:relative;overflow:hidden;color:var(--ink-2)}
-.datebtn input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;border:0;padding:0}
 .legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
 
 /* sheet */
@@ -215,43 +212,23 @@ html.phone .sheet h3{font-size:20px}
 .empty{padding:30px 16px;text-align:center;color:var(--ink-2)}
 @media (prefers-reduced-motion:no-preference){.sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(12px);opacity:.6}}}
 
-i.lg,i.sh{font-style:normal} i.sh{display:none}
-@media (max-width:560px){
-  i.lg{display:none} i.sh{display:inline}
-  .top{flex-wrap:nowrap}
-  .yearstrip{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:5px!important;margin-bottom:10px}
-  .yearstrip div{padding:6px 7px!important}
-  .yearstrip span{font-size:10px;letter-spacing:.03em}
-  .yearstrip b{font-size:18px!important}
-  .calbar .datebtn,.calbar select#filtro{flex:1 1 40%!important;max-width:none!important;font-size:14px;justify-content:center}
-  .calbar .btn{padding:7px 11px}
-  .months{margin-bottom:8px}
-  .months button{padding:5px 9px;font-size:13px}
-  .monthhead{flex-direction:column;align-items:flex-start;gap:2px}
-  .monthhead h2{font-size:24px!important}
-  .msum{text-align:left!important;font-size:12px}
-  .day .code{font-size:10.5px}
-}
-
-/* telefono con «Sito desktop» attivo: stesse regole del layout mobile */
-html.phone .yearstrip{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
-html.phone .yearstrip div{padding:6px 9px}
-html.phone .yearstrip b{font-size:20px}
-html.phone .brand h1{font-size:20px}
-html.phone .brand span{display:none}
-html.phone .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:15;background:var(--bg);padding-block:8px;margin-bottom:4px}
-html.phone .sync{padding:3px 8px;font-size:11.5px}
-html.phone .calbar{gap:6px}
-html.phone .calbar .datebtn{flex:1 1 140px;justify-content:center}
-html.phone .calbar select#filtro{flex:1 1 100%;max-width:none!important}
+/* PHONE-START */
+html.phone .calbar{grid-template-columns:auto minmax(0,1fr) minmax(0,1.3fr) minmax(0,.95fr);gap:5px}
+html.phone .calbar select,html.phone .calbar .btn{font-size:13.5px;height:40px;padding-inline:5px}
+html.phone .calbar .btn{padding-inline:10px}
+html.phone .months button{padding:5px 9px;font-size:13px}
+html.phone .calcard{margin-inline:-14px;border-radius:0;border-left:0;border-right:0;padding:10px 2px}
+html.phone .monthhead h2{font-size:24px}
+html.phone .monthhead h2 small{font-size:20px}
+html.phone .msum{font-size:12px}
+html.phone .grid{gap:2px}
+html.phone .day{min-height:78px;padding:3px 2px;border-radius:6px}
+html.phone .day .num{font-size:15px}
+html.phone .day .code{font-size:11px;letter-spacing:-.1px;line-height:1.05}
+html.phone .day .det{font-size:8.5px;line-height:1.1;letter-spacing:-.1px}
+html.phone .tag{font-size:8.5px;padding:0 2px;border-radius:3px}
 html.phone .card{padding:12px}
-html.phone .monthhead h2{font-size:26px}
-html.phone .grid{gap:3px}
-html.phone .day{min-height:64px;padding:4px 3px}
-html.phone .day .det{font-size:9.5px;line-height:1.15;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
-html.phone .day .code{font-size:10px}
-html.phone .day .num{font-size:16px}
-html.phone .tag{font-size:9px;padding:0 3px}
+html.phone .sheet h3{font-size:20px}
 html.phone .two{grid-template-columns:1fr}
 html.phone .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
 html.phone .rgrid{grid-template-columns:minmax(0,1fr)}
@@ -259,21 +236,7 @@ html.phone .set{grid-template-columns:1fr}
 html.phone .setnav{flex-direction:row;overflow-x:auto;position:static;padding-bottom:4px}
 html.phone .setnav button{flex:none;border:1px solid var(--line);background:var(--surface)}
 html.phone .setnav button[aria-current="true"]{background:var(--ink);color:var(--bg);box-shadow:none}
-html.phone i.lg{display:none}
-html.phone i.sh{display:inline}
-html.phone .top{flex-wrap:nowrap}
-html.phone .yearstrip{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:5px!important;margin-bottom:10px}
-html.phone .yearstrip div{padding:6px 7px!important}
-html.phone .yearstrip span{font-size:10px;letter-spacing:.03em}
-html.phone .yearstrip b{font-size:18px!important}
-html.phone .calbar .datebtn,html.phone .calbar select#filtro{flex:1 1 40%!important;max-width:none!important;font-size:14px;justify-content:center}
-html.phone .calbar .btn{padding:7px 11px}
-html.phone .months{margin-bottom:8px}
-html.phone .months button{padding:5px 9px;font-size:13px}
-html.phone .monthhead{flex-direction:column;align-items:flex-start;gap:2px}
-html.phone .monthhead h2{font-size:24px!important}
-html.phone .msum{text-align:left!important;font-size:12px}
-html.phone .day .code{font-size:10.5px}
+/* PHONE-END */
 </style>
 
 <nav class="tabs" id="tabs">
@@ -460,6 +423,12 @@ function normalize(d){
     c.migrazioni.push("41bis-ordine-in-lavoro");
     _migrato = true;
   }
+  if(!c.migrazioni.includes("permessi-mensili-4h")){
+    // 01/10/2026: i permessi sono 4 h al mese, non cumulabili
+    for(const p of Object.values(c.parametri)){ p.permessiMensiliOre = 4; delete p.permessiOre; }
+    c.migrazioni.push("permessi-mensili-4h");
+    _migrato = true;
+  }
   for(const y of Object.keys(c.parametri)) if(!anni[y]) anni[y]={giorni:{}};
   return { config:c, anni, meta: Object.assign({ultimaModifica:null, ultimaEsportazione:null}, d.meta||{}) };
 }
@@ -513,6 +482,23 @@ function congedoLedger(){
     at(ds){ let r=null; for(const p of points){ if(p.date<=ds) r=p; else break; } return r?r.b:{}; },
     afterDay(ds){ const p=points.filter(p=>p.date===ds&&p.kind==="uso"); return p.length?p[p.length-1].b:null; } };
 }
+/** Permessi: ore mensili (4 h salvo diversa impostazione), non cumulabili: il 1° del mese ripartono da capo. */
+const permOreMese = y => +(S.config.parametri[y]?.permessiMensiliOre ?? 4);
+function permessiMese(y,m){
+  const da=ymd(y,m,1), a=ymd(y,m,dim(y,m));
+  if(a < S.config.dataInizio) return {spettanti:0, usati:0, residui:0, persi:0};
+  const spettanti = permOreMese(y)*60;
+  let usati=0; for(const ds of dates(da,a)){ const r=dayRec(ds); if(r?.permessoMin) usati+=r.permessoMin; }
+  const residui = spettanti-usati, chiuso = a < todayStr();
+  return {spettanti, usati, residui, persi: chiuso ? Math.max(0,residui) : 0};
+}
+function permessiPeriodo(da,a){
+  const r={spettanti:0, usati:0, persi:0, mesi:0};
+  let [y,m]=parts(da); const [y2,m2]=parts(a);
+  const oggi=todayStr();
+  while(y<y2 || (y===y2 && m<=m2)){ if(ymd(y,m,1)>oggi) break; const p=permessiMese(y,m); if(p.spettanti){ r.spettanti+=p.spettanti; r.usati+=p.usati; r.persi+=p.persi; r.mesi++; } m++; if(m>12){m=1;y++;} }
+  return r;
+}
 const tot = b => Object.values(b||{}).reduce((a,v)=>a+v,0);
 const bucketsTxt = b => { const e=Object.entries(b||{}).filter(([k,v])=>v!==0).sort(); return e.length? e.map(([k,v])=>`${k}: ${v}`).join(" · ") : "nessun residuo"; };
 
@@ -554,7 +540,7 @@ function stats(da, a){
       if(c?.categoria==="Riposo") r.riposi++;
       if(c?.categoria==="Festività") r.festivi++;
       if(rec.turno && c?.lavorativo) r.turniPomLav++;
-    } else if(ds<=oggi && !rec.codice){ r.vuoti.push(ds); }
+    } else if(ds<oggi && !rec.codice){ r.vuoti.push(ds); }
     if(rec.turno && (ds<=oggi || rec.codice)){ r.turniPom++; M.turniPom++; }
     if(rec.straordinarioMin){ r.straordMin+=rec.straordinarioMin; M.straordMin+=rec.straordinarioMin; r.straordGiorni.push(ds); }
     if(rec.permessoMin){ r.permessoMin+=rec.permessoMin; M.permessoMin+=rec.permessoMin; r.permessoGiorni.push(ds); }
@@ -611,36 +597,32 @@ function renderCal(){
   const firstM = (y===+start.slice(0,4)) ? +start.slice(5,7) : 1;
   if(UI.month==null || UI.month<firstM) UI.month = (y===+oggi.slice(0,4)) ? +oggi.slice(5,7) : firstM;
   const m = UI.month;
-  const L = congedoLedger();
-  const ys_ = stats(ymd(y,1,1), ymd(y,12,31));
-  const resNow = L.at(oggi < ymd(y,12,31) ? oggi : ymd(y,12,31));
-  const permDisp = (+(S.config.parametri[y]?.permessiOre||0))*60;
   const filtri = S.config.codici.filter(c=>c.attivo || usage()[c.id]);
   const cats = [...new Set(S.config.codici.map(c=>c.categoria))];
-
   let h = `
   <div class="calbar">
-    <select id="yearSel" aria-label="Anno">${ys.map(v=>`<option ${v===y?"selected":""}>${v}</option>`).join("")}</select>
-    <button class="btn" id="prevM" aria-label="Mese precedente">‹</button>
-    <button class="btn" id="nextM" aria-label="Mese successivo">›</button>
     <button class="btn" id="todayB">Oggi</button>
-    <label class="btn datebtn" for="goDate">📅 Seleziona data<input type="date" id="goDate" aria-label="Seleziona data" min="${start}"></label>
-    <select id="filtro" aria-label="Filtro" class="grow" style="max-width:220px">
-      <option value="">Tutti i giorni</option>
+    <select id="daySel" aria-label="Giorno"><option value="">Giorno</option>${Array.from({length:dim(y,m)},(_,i)=>{const ds=ymd(y,m,i+1);return `<option value="${ds}" ${ds<start?"disabled":""}>${i+1}</option>`}).join("")}</select>
+    <select id="monSel" aria-label="Mese">${MESI.map((n,i)=>`<option value="${i+1}" ${i+1===m?"selected":""} ${i+1<firstM?"disabled":""}>${n}</option>`).join("")}</select>
+    <select id="yearSel" aria-label="Anno">${ys.map(v=>`<option ${v===y?"selected":""}>${v}</option>`).join("")}</select>
+  </div>
+  <div class="filtrobar"><select id="filtro" aria-label="Mostra">
+      <option value="">Mostra tutti i giorni</option>
       <optgroup label="Codice">${filtri.map(c=>`<option value="c:${esc(c.id)}" ${UI.filtro==="c:"+c.id?"selected":""}>${esc(c.nome)}</option>`).join("")}</optgroup>
       <optgroup label="Categoria">${cats.map(c=>`<option value="k:${esc(c)}" ${UI.filtro==="k:"+c?"selected":""}>${esc(c)}</option>`).join("")}</optgroup>
-      <optgroup label="Altro"><option value="x:turno" ${UI.filtro==="x:turno"?"selected":""}>Turno pomeridiano</option><option value="x:straord" ${UI.filtro==="x:straord"?"selected":""}>Con straordinario</option><option value="x:vuoti" ${UI.filtro==="x:vuoti"?"selected":""}>Senza registrazione</option></optgroup>
-    </select>
-  </div>
+      <optgroup label="Altro"><option value="x:turno" ${UI.filtro==="x:turno"?"selected":""}>Turno pomeridiano</option><option value="x:straord" ${UI.filtro==="x:straord"?"selected":""}>Con straordinario</option><option value="x:perm" ${UI.filtro==="x:perm"?"selected":""}>Con permesso</option><option value="x:vuoti" ${UI.filtro==="x:vuoti"?"selected":""}>Senza registrazione</option></optgroup>
+  </select></div>
   <div class="months" role="group" aria-label="Mesi">${MESI.map((n,i)=>`<button data-m="${i+1}" aria-pressed="${i+1===m}" ${i+1<firstM?"disabled":""}>${MESI3[i]}</button>`).join("")}</div>`;
 
   const ms = stats(ymd(y,m,1), ymd(y,m,dim(y,m)));
-  h += `<div class="card" style="padding:12px">
+  const pm = permessiMese(y,m);
+  const permTxt = ymd(y,m,dim(y,m)) < oggi ? (pm.usati?` · permessi usati ${fmtHM(pm.usati)}`:"") : ` · permessi disponibili ${fmtHM(pm.residui)}`;
+  h += `<div class="card calcard">
     <div class="monthhead"><h2>${MESI[m-1]} <small>${y}</small></h2>
-      <div class="small muted msum" style="text-align:right">${ms.lavorate} lavorate · ${ms.congedo} congedo${ms.straordMin?` · straord. ${fmtHM(ms.straordMin)}`:""}${ms.turniPom?` · ${ms.turniPom} pom.`:""}</div></div>`;
+      <div class="msum">${ms.lavorate} lavorate · ${ms.congedo} congedo${ms.straordMin?` · straordinari ${fmtHM(ms.straordMin)}`:""}${permTxt}</div></div>`;
   const fd = S.config.preferenze.primoGiorno===0 ? 0 : 1;
   const order = fd===1 ? [1,2,3,4,5,6,0] : [0,1,2,3,4,5,6];
-  h += `<div class="grid">${order.map(i=>`<div class="wd">${WD1[i]}</div>`).join("")}`;
+  h += `<div class="grid">${order.map(i=>`<div class="wd${i===0?" sun":""}">${WD1[i]}</div>`).join("")}`;
   const lead = (dow(ymd(y,m,1)) - fd + 7) % 7;
   for(let i=0;i<lead;i++) h += `<div class="day pad" aria-hidden="true"></div>`;
   for(let d=1; d<=dim(y,m); d++){
@@ -657,7 +639,7 @@ function renderCal(){
     const label = `${fmtDate(ds,true)}${c?", "+c.nome:""}${rec.turno?", turno pomeridiano":""}`;
     h += `<button class="${cls.join(" ")}" ${out?"disabled":""} data-day="${ds}" style="--c:${c?esc(c.colore):"var(--muted)"}" aria-label="${esc(label)}">
       <span class="num">${d}</span>
-      ${c?`<span class="code"><i class="lg">${esc(c.nome)}</i><i class="sh">${esc(shortName(c))}</i></span>`:""}
+      ${c?`<span class="code">${esc(c.nome)}</span>`:""}
       ${rec.dettaglio && c && c.id==="lavoro"?`<span class="det">${esc(rec.dettaglio)}</span>`:""}
       ${tags.length?`<span class="tags">${tags.join("")}</span>`:""}
     </button>`;
@@ -670,22 +652,35 @@ function renderCal(){
   $("#view").innerHTML = h;
 
   $("#yearSel").onchange = e=>{ UI.year=+e.target.value; UI.month=null; renderCal(); };
-  $("#prevM").onclick = ()=>stepMonth(-1);
-  $("#nextM").onclick = ()=>stepMonth(1);
+  $("#monSel").onchange = e=>{ UI.month=+e.target.value; renderCal(); };
+  $("#daySel").onchange = e=>{ const v=e.target.value; e.target.value=""; if(v) openDay(v); };
   $("#todayB").onclick = ()=>{ const t=todayStr(); UI.year=+t.slice(0,4); UI.month=+t.slice(5,7); renderCal(); };
-  $("#goDate").onchange = e=>{ const v=e.target.value; if(!v) return; if(!yearsList(false).includes(+v.slice(0,4))){ toast("Anno non presente: aggiungilo da Impostazioni → Anni."); return; } UI.year=+v.slice(0,4); UI.month=+v.slice(5,7); renderCal(); if(v>=S.config.dataInizio) openDay(v); };
+  { const g=$(".grid"); let x0=null,y0=null;
+    g.addEventListener("touchstart",e=>{ x0=e.touches[0].clientX; y0=e.touches[0].clientY; },{passive:true});
+    g.addEventListener("touchend",e=>{ if(x0==null) return; const dx=e.changedTouches[0].clientX-x0, dy=e.changedTouches[0].clientY-y0; x0=null; if(Math.abs(dx)>60 && Math.abs(dx)>Math.abs(dy)*1.5) stepMonth(dx<0?1:-1); },{passive:true}); }
   $("#filtro").onchange = e=>{ UI.filtro=e.target.value; renderCal(); };
   document.querySelectorAll(".months button").forEach(b=>b.onclick=()=>{ UI.month=+b.dataset.m; renderCal(); });
   { const bar=$(".months"), cur=bar.querySelector('[aria-pressed="true"]'); if(cur) bar.scrollLeft = cur.offsetLeft - bar.offsetLeft - (bar.clientWidth - cur.offsetWidth)/2; }
   document.querySelectorAll(".day[data-day]").forEach(b=>b.onclick=()=>openDay(b.dataset.day));
+  fitCodes();
 }
-function shortName(c){ if(c.sigla) return c.sigla; const n=c.nome.trim(); if(/^\d/.test(n)) return n.replace(/\s+/g,""); const w=n.split(/\s+/); if(w.length>1 && w[0].length<=3) return w[0]; return w[0].length<=5 ? w[0] : w[0].slice(0,4)+"."; }
+/** Adatta il nome del codice alla cella: rimpicciolisce il testo finché ogni parola sta nella casella. */
+function fitCodes(){
+  document.querySelectorAll(".day .code").forEach(el=>{
+    el.style.fontSize=""; el.style.overflowWrap="";
+    let fs=parseFloat(getComputedStyle(el).fontSize);
+    while(el.scrollWidth>el.clientWidth+0.5 && fs>7.5){ fs-=0.5; el.style.fontSize=fs+"px"; }
+    if(el.scrollWidth>el.clientWidth+0.5) el.style.overflowWrap="anywhere";
+  });
+}
+addEventListener("resize",()=>{ if(UI.tab==="calendario" && S) fitCodes(); });
 function matchFiltro(ds, rec, ec, c){
   const f=UI.filtro, v=f.slice(2);
   if(f.startsWith("c:")) return ec && ec.id===v;
   if(f.startsWith("k:")) return c && c.categoria===v;
   if(f==="x:turno") return !!rec.turno;
   if(f==="x:straord") return !!rec.straordinarioMin;
+  if(f==="x:perm") return !!rec.permessoMin;
   if(f==="x:vuoti") return !ec && ds<=todayStr();
   return true;
 }
@@ -721,6 +716,7 @@ function openDay(ds){
         <div class="hm"><input type="number" id="oH" min="0" max="24" value="${oH||""}" placeholder="0" aria-label="Ore straordinario"> h <input type="number" id="oM" min="0" max="59" value="${oM||""}" placeholder="0" aria-label="Minuti straordinario"> min</div>
         <div class="hm small muted">dalle <input type="time" id="oDa" value="${esc(f1.dalle||"")}"> alle <input type="time" id="oA" value="${esc(f1.alle||"")}"></div></div>
       <div class="stack" style="gap:6px"><span class="lbl">Permesso</span>
+        <span class="small muted" id="permInfo"></span>
         <div class="hm"><input type="number" id="pH" min="0" max="24" value="${pH||""}" placeholder="0" aria-label="Ore permesso"> h <input type="number" id="pM" min="0" max="59" value="${pM||""}" placeholder="0" aria-label="Minuti permesso"> min</div>
         <div class="hm small muted">dalle <input type="time" id="pDa" value="${esc(pf.dalle||"")}"> alle <input type="time" id="pA" value="${esc(pf.alle||"")}"></div></div>
     </div>
@@ -743,6 +739,8 @@ function openDay(ds){
       chk = `<br>Annotato nel calendario: ${rc.totale} (${bucketsTxt(rc.perAnno)}) — <b class="${ok?"ok":"bad"}">${ok?"coincide":"non coincide"}</b>`; }
     box.innerHTML = `<p class="notice small" style="margin:0">Congedo residuo dopo questa giornata: <b>${tot(after)}</b> (${bucketsTxt(after)})${chk}</p>`;
   };
+  { const [py,pmm]=parts(ds); const pp=permessiMese(py,pmm), mine=dayRec(ds)?.permessoMin||0;
+    $("#permInfo").textContent = `${MESI[pmm-1]}: disponibili ${fmtHM(pp.residui+mine)} su ${fmtHM(pp.spettanti)} (si azzerano il 1° del mese)`; }
   const detVis=()=>{ $("#detBox").hidden = sel!=="lavoro"; };
   congInfo(); detVis();
   const close = ()=>{ $("#modal").innerHTML=""; };
@@ -800,9 +798,9 @@ function renderReport(){
   const resFine = L.at(fine), resIni = L.at(addDays(da,-1) < S.config.dataInizio ? S.config.dataInizio : addDays(da,-1));
   const accrIn = Object.entries(S.config.parametri).filter(([y,p])=>+y>+S.config.dataInizio.slice(0,4) && ymd(+y,1,1)>=da && ymd(+y,1,1)<=a).reduce((s,[y,p])=>s+(+p.congedoSpettante||0),0);
   // permessi: disponibilità degli anni coinvolti
-  const yIn=[]; for(let y=+da.slice(0,4); y<=+a.slice(0,4); y++) yIn.push(y);
-  const permDisp = yIn.reduce((s,y)=>s+(+(S.config.parametri[y]?.permessiOre||0))*60,0);
-  const permUsatiAnni = yIn.reduce((s,y)=>s+stats(ymd(y,1,1),ymd(y,12,31)).permessoMin,0);
+  const PP = permessiPeriodo(da,a);
+  const curY=+oggi.slice(0,4), curM=+oggi.slice(5,7);
+  const pCur = (ymd(curY,curM,1)<=a && oggi>=da) ? permessiMese(curY,curM) : null;
   const periodo = R.tipo==="anno" ? `Anno ${R.anno}` : R.tipo==="mese" ? `${MESI[R.mese-1]} ${R.anno}` : `Dal ${fmtDate(da)} al ${fmtDate(a)}`;
 
   let h = `<div class="card" style="margin-bottom:14px;padding:12px"><div class="row">
@@ -815,7 +813,7 @@ function renderReport(){
   h += `<div class="tiles" style="margin-bottom:14px">
     <div class="tile"><span>Giornate lavorate</span><b>${st.lavorate}</b><small>di cui ${st.trasferte} in trasferta</small></div>
     <div class="tile"><span>Straordinari</span><b>${fmtHM(st.straordMin)}</b><small>${st.straordGiorni.length} giornate</small></div>
-    <div class="tile"><span>Congedo usato</span><b>${st.congedo}</b><small>residuo ${tot(resFine)} gg</small></div>
+    <div class="tile"><span>Congedo usato</span><b>${st.congedo}</b><small>residuo ${tot(resFine)} giorni</small></div>
     <div class="tile"><span>Turni pomeridiani</span><b>${st.turniPomLav}</b><small>lavorati su ${st.turniPom} in calendario</small></div>
   </div>`;
 
@@ -847,16 +845,20 @@ function renderReport(){
   </section>`;
   // Permessi e assenze
   h += `<section class="card"><h2>Permessi e altre voci</h2>
-    <dl class="kv"><dt>Permessi disponibili ${yIn.join("–")}</dt><dd>${fmtHM(permDisp)}</dd><dt>Permessi usati nel periodo</dt><dd>${fmtHM(st.permessoMin)}</dd><dt>Permessi residui</dt><dd>${fmtHM(permDisp-permUsatiAnni)}</dd>
-    <dt>Malattia</dt><dd>${st.malattia} gg</dd><dt>Riposi</dt><dd>${st.riposi} gg</dd><dt>Festività</dt><dd>${st.festivi} gg</dd><dt>Turni pomeridiani in calendario</dt><dd>${st.turniPom}</dd>
+    <dl class="kv"><dt>Permessi spettanti al mese</dt><dd>${fmtOre(permOreMese(+a.slice(0,4))*60)}</dd>
+    <dt>Spettanti nel periodo (${PP.mesi} ${PP.mesi===1?"mese":"mesi"})</dt><dd>${fmtHM(PP.spettanti)}</dd>
+    <dt>Usati nel periodo</dt><dd>${fmtHM(PP.usati)}</dd>
+    ${pCur?`<dt>Ancora disponibili a ${MESI[curM-1].toLowerCase()}</dt><dd>${fmtHM(pCur.residui)}</dd>`:""}
+    <dt>Non usati e azzerati</dt><dd>${fmtHM(PP.persi)}</dd>
+    <dt>Malattia</dt><dd>${st.malattia} giorni</dd><dt>Riposi</dt><dd>${st.riposi} giorni</dd><dt>Festività</dt><dd>${st.festivi} giorni</dd><dt>Turni pomeridiani in calendario</dt><dd>${st.turniPom}</dd>
     <dt>Giorni senza registrazione</dt><dd class="${st.vuoti.length?"warn":""}">${st.vuoti.length}</dd></dl>
-    ${st.vuoti.length?`<p class="small muted" style="margin:8px 0 0">${st.vuoti.map(fmtDate).join(", ")}</p>`:""}
+    ${st.vuoti.length?`<p class="small muted" style="margin:8px 0 0">${st.vuoti.map(d=>fmtDate(d)).join(", ")}</p>`:""}
   </section>`;
   h += `</div>`;
   // Andamento mensile
   if(mk.length>1) h += `<section class="card" style="margin-top:14px"><h2>Andamento mensile</h2><div class="tscroll"><table>
     <tr><th>Mese</th><th class="n">Lavorate</th><th class="n">Trasferte</th><th class="n">Congedo</th><th class="n">Malattia</th><th class="n">Straord.</th><th class="n">Permessi</th><th class="n">Turni pom.</th></tr>
-    ${mk.map(k=>{const M=st.mesi[k];return `<tr><td>${MESI[+k.slice(5)-1]} ${k.slice(0,4)}</td><td class="n">${M.lavorate}</td><td class="n">${M.trasferte}</td><td class="n">${M.congedo}</td><td class="n">${M.malattia}</td><td class="n">${fmtHM(M.straordMin)}</td><td class="n">${fmtHM(M.permessoMin)}</td><td class="n">${M.turniPom}</td></tr>`}).join("")}
+    ${mk.map(k=>{const M=st.mesi[k];return `<tr><td>${MESI[+k.slice(5)-1]} ${k.slice(0,4)}</td><td class="n">${M.lavorate}</td><td class="n">${M.trasferte}</td><td class="n">${M.congedo}</td><td class="n">${M.malattia}</td><td class="n">${fmtHM(M.straordMin)}</td><td class="n">${fmtHM(M.permessoMin)} / ${fmtHM(permessiMese(+k.slice(0,4),+k.slice(5,7)).spettanti)}</td><td class="n">${M.turniPom}</td></tr>`}).join("")}
     <tr><th>Totale</th><th class="n">${st.lavorate}</th><th class="n">${st.trasferte}</th><th class="n">${st.congedo}</th><th class="n">${st.malattia}</th><th class="n">${fmtHM(st.straordMin)}</th><th class="n">${fmtHM(st.permessoMin)}</th><th class="n">${st.turniPom}</th></tr>
   </table></div></section>`;
   // Mezzi
@@ -957,19 +959,19 @@ function setAnni(){
     <p class="small muted" style="margin:0 0 10px">Il calendario del nuovo anno viene creato con i giorni e le settimane corrette. Le presenze dell'anno precedente non vengono copiate; i residui di congedo e permessi passano da soli all'anno nuovo.</p>
     <div class="row"><label class="f">Anno<input type="number" id="nyY" value="${next}" style="width:100px"></label>
     <label class="f">Congedo spettante (giorni)<input type="number" id="nySp" value="${esc(prevSp)}" min="0" style="width:130px"></label>
-    <label class="f">Permessi disponibili (ore)<input type="number" id="nyP" value="0" min="0" step="0.5" style="width:130px"></label>
+    <label class="f">Permessi al mese (ore)<input type="number" id="nyP" value="${permOreMese(next-1)}" min="0" step="0.5" style="width:130px"></label>
     <button class="btn primary" id="addYear" style="align-self:flex-end">Crea anno</button></div>
     <p class="small muted" style="margin:8px 0 0">Il congedo spettante è precompilato con il valore dell'anno prima: controllalo con la tua busta paga prima di confermare.</p></div>`;
   $("#setBody").querySelectorAll("[data-arch]").forEach(b=>b.onclick=()=>{ const y=+b.dataset.arch, A=S.config.anniArchiviati; const i=A.indexOf(y); if(i>=0) A.splice(i,1); else A.push(y); Store.touch("config"); setAnni(); });
   $("#addYear").onclick=()=>{ const y=+$("#nyY").value; if(!(y>=2000&&y<=2100)){ toast("Inserisci un anno valido"); return; }
     if(S.anni[y]){ toast(`L'anno ${y} esiste già`); return; }
     if(ymd(y,12,31)<S.config.dataInizio){ toast("Il registro inizia il "+fmtDate(S.config.dataInizio)); return; }
-    S.anni[y]={giorni:{}}; S.config.parametri[y]={congedoSpettante:+$("#nySp").value||0, permessiOre:+$("#nyP").value||0, note:""};
+    S.anni[y]={giorni:{}}; S.config.parametri[y]={congedoSpettante:+$("#nySp").value||0, permessiMensiliOre:+$("#nyP").value||0, note:""};
     Store.touch("anno:"+y); Store.touch("config"); setAnni(); toast(`Anno ${y} creato`); };
 }
 function setParametri(){
   const ys=yearsList(true); UI.parY ||= +todayStr().slice(0,4); if(!ys.includes(UI.parY)) UI.parY=ys[ys.length-1];
-  const y=UI.parY, p = S.config.parametri[y] ||= {congedoSpettante:0, permessiOre:0, note:""};
+  const y=UI.parY, p = S.config.parametri[y] ||= {congedoSpettante:0, permessiMensiliOre:4, note:""};
   const L=congedoLedger(), sy=+S.config.dataInizio.slice(0,4);
   const ini = L.yearStart[y]||{};
   const st = stats(ymd(y,1,1), ymd(y,12,31));
@@ -979,7 +981,7 @@ function setParametri(){
     <select id="parY" aria-label="Anno">${ys.map(v=>`<option ${v===y?"selected":""}>${v}</option>`).join("")}</select></div>
     <div class="row" style="align-items:flex-end">
       <label class="f">Congedo spettante ${y} (giorni)<input type="number" id="pSp" value="${p.congedoSpettante??0}" min="0" style="width:150px"></label>
-      <label class="f">Permessi disponibili ${y} (ore)<input type="number" id="pPe" value="${p.permessiOre??0}" min="0" step="0.5" style="width:150px"></label>
+      <label class="f">Permessi al mese ${y} (ore)<input type="number" id="pPe" value="${p.permessiMensiliOre??4}" min="0" step="0.5" style="width:150px"></label>
     </div>
     <label class="f" style="margin-top:10px">Note<input type="text" id="pNo" value="${esc(p.note||"")}"></label>
     <p class="small muted" style="margin:10px 0 0">${y===sy?`Nel ${y} il registro parte dal ${fmtDate(S.config.dataInizio)}: il congedo disponibile a quella data è nei residui di avvio qui sotto.`:`Il congedo spettante viene accreditato il 1° gennaio ${y} e si somma ai residui degli anni precedenti.`}</p></div>
@@ -987,7 +989,7 @@ function setParametri(){
     <dt>Congedo disponibile a inizio ${y===sy?"registro":"anno"}</dt><dd>${tot(ini)} <span class="small muted">(${bucketsTxt(ini)})</span></dd>
     <dt>Congedo usato nel ${y}</dt><dd>${st.congedo}</dd>
     <dt>Congedo residuo ${todayStr()<ymd(y,12,31)?"oggi":"a fine anno"}</dt><dd>${tot(resOggi)} <span class="small muted">(${bucketsTxt(resOggi)})</span></dd>
-    <dt>Permessi usati / residui</dt><dd>${fmtHM(st.permessoMin)} / ${fmtHM((+p.permessiOre||0)*60-st.permessoMin)}</dd>
+    ${(()=>{const pp=permessiPeriodo(ymd(y,1,1),ymd(y,12,31));return `<dt>Permessi usati nel ${y}</dt><dd>${fmtHM(pp.usati)}</dd><dt>Permessi non usati e azzerati</dt><dd>${fmtHM(pp.persi)}</dd>`})()}
     <dt>Straordinari ${y}</dt><dd>${fmtHM(st.straordMin)}</dd></dl>
     <p class="small muted" style="margin:10px 0 0">Questi valori non si modificano a mano: derivano dalle giornate e dai parametri.</p></div>
   <div class="card"><h2>Residui di congedo all'avvio del registro</h2>
@@ -997,7 +999,7 @@ function setParametri(){
   $("#parY").onchange=e=>{ UI.parY=+e.target.value; setParametri(); };
   const upd=(k,v)=>{ p[k]=v; Store.touch("config"); setParametri(); toast("Parametri aggiornati"); };
   $("#pSp").onchange=e=>upd("congedoSpettante", +e.target.value||0);
-  $("#pPe").onchange=e=>upd("permessiOre", +e.target.value||0);
+  $("#pPe").onchange=e=>upd("permessiMensiliOre", +e.target.value||0);
   $("#pNo").onchange=e=>{ p.note=e.target.value; Store.touch("config"); };
   $("#setBody").querySelectorAll("[data-av]").forEach(i=>i.onchange=()=>{ const v=+i.value||0; if(v===0) delete S.config.congedoAvvio[i.dataset.av]; else S.config.congedoAvvio[i.dataset.av]=v; Store.touch("config"); setParametri(); });
   $("#avNew").onchange=e=>{ const k=String(+e.target.value); if(+k>1990 && !(k in S.config.congedoAvvio)){ S.config.congedoAvvio[k]=0; setParametri(); } };
@@ -1083,7 +1085,7 @@ async function exportXLSX(){
   }
   X.utils.book_append_sheet(wb, X.utils.json_to_sheet(giornateRows()), "Giornate");
   X.utils.book_append_sheet(wb, X.utils.json_to_sheet(S.config.codici.map(c=>({Codice:c.id, Nome:c.nome, Sigla:c.sigla||"", Categoria:c.categoria, Colore:c.colore, Lavorativo:c.lavorativo?"Sì":"No", "Scala congedo":c.scalaCongedo?"Sì":"No", Valore:c.valore??"", Attivo:c.attivo?"Sì":"No"}))), "Codici");
-  X.utils.book_append_sheet(wb, X.utils.json_to_sheet(Object.entries(S.config.parametri).sort().map(([y,p])=>({Anno:+y, "Congedo spettante":p.congedoSpettante||0, "Permessi disponibili (ore)":p.permessiOre||0, Note:p.note||""}))), "Parametri");
+  X.utils.book_append_sheet(wb, X.utils.json_to_sheet(Object.entries(S.config.parametri).sort().map(([y,p])=>({Anno:+y, "Congedo spettante":p.congedoSpettante||0, "Permessi al mese (ore)":p.permessiMensiliOre??4, Note:p.note||""}))), "Parametri");
   const buf = X.write(wb,{bookType:"xlsx",type:"array"});
   if(await saveFile(`registro-presenze-${stamp()}.xlsx`, new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")){ S.meta.ultimaEsportazione=new Date().toISOString(); Store.touch("config"); toast("Excel esportato"); }
 }
@@ -1156,7 +1158,7 @@ function setExcel(){
       if(mk) for(const [name] of unk){ if(!findCode(name)){ let id=slug(name),i=2; while(codeById(id)) id=slug(name)+"_"+i++; S.config.codici.push({id,nome:name,categoria:"Altro",colore:"#6E7F91",lavorativo:false,attivo:true}); } }
       for(const [ds,n0] of Object.entries(A.recs)){ if(ds<S.config.dataInizio) continue; const n=clone(n0);
         if(n._ignoto){ const c=mk?findCode(n._ignoto):null; if(c) n.codice=c.id; delete n._ignoto; }
-        const y=ds.slice(0,4); S.anni[y] ||= {giorni:{}}; S.config.parametri[y] ||= {congedoSpettante:0,permessiOre:0,note:""};
+        const y=ds.slice(0,4); S.anni[y] ||= {giorni:{}}; S.config.parametri[y] ||= {congedoSpettante:0,permessiMensiliOre:4,note:""};
         const o=S.anni[y].giorni[ds]; if(o&&o.codice&&!over){ if(!Object.keys(n).some(key=>key!=="origine"&&key!=="codice"&&!o[key])) continue; S.anni[y].giorni[ds]={...n,...o}; }
         else S.anni[y].giorni[ds]= o? {...o,...n} : n;
         Store.touch("anno:"+y); k++; }
@@ -1231,6 +1233,7 @@ function setReset(){
 }
 
 /* ============================ avvio ============================ */
+document.documentElement.lang ||= "it";
 (async function boot(){
   const h = location.hash.slice(1); if(["calendario","report","impostazioni"].includes(h)) UI.tab=h;
   try{ await Store.init(); }catch(e){ S=null; Store.setStatus("err","Impossibile leggere i dati: ricarica la pagina."); }
