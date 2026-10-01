@@ -116,7 +116,7 @@ td.n,th.n{text-align:right}
 .wd{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);text-align:center;font-weight:700;padding:2px 0}
 .wd.sun{color:var(--bad)}
 .day{position:relative;min-height:84px;border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:5px;text-align:left;display:flex;flex-direction:column;gap:2px;min-width:0;overflow:hidden}
-.day.coded{background:color-mix(in srgb,var(--c) 13%,var(--surface));border-color:color-mix(in srgb,var(--c) 35%,var(--line))}
+.day.coded{background:linear-gradient(135deg,color-mix(in srgb,var(--c) 13%,var(--surface)) 0 55%,color-mix(in srgb,var(--c2,var(--c)) 13%,var(--surface)) 55% 100%);border-color:color-mix(in srgb,var(--c) 35%,var(--line))}
 .day.auto{background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--c) 9%,var(--surface)) 0 6px,var(--surface) 6px 12px)}
 .day.out{opacity:.35;cursor:default;background:transparent;border-style:dashed}
 .day.pad{visibility:hidden}
@@ -296,7 +296,7 @@ const estraiMezzi = t => [...new Set((String(t||"").match(MEZZI_RE)||[]).map(x=>
 /* ============================ stato ============================ */
 let S = null;            // {config, anni:{[y]:{giorni}}, meta}
 let UI = { tab:"calendario", year:null, month:null, filtro:"", setSec:"codici",
-           rep:{tipo:"anno", anno:null, mese:null, da:"", a:""} };
+           rep:{tipo:"mese", anno:null, mese:null, da:"", a:""} };
 
 /* ============================ archiviazione ============================ */
 const LS_KEY = "registroPresenze.v1", LS_BAK = "registroPresenze.backupAuto";
@@ -446,6 +446,8 @@ function isFestivo(ds){
   if(S.config.pasquetta && ds === addDays(easter(+ds.slice(0,4)),1)) return true;
   return false;
 }
+/** Tutti i codici registrati in una giornata (il primo è il principale). */
+const codesOf = r => r ? [r.codice, ...(r.codiciExtra||[])].filter(Boolean) : [];
 /** Codice effettivo: quello inserito; altrimenti festività/domenica automatiche. */
 function effCode(ds){
   const r = dayRec(ds);
@@ -556,15 +558,16 @@ function stats(da, a){
     if(ec && ec.auto && ds>oggi) { continue; }
     if(rec.codice) r.registrate++;
     if(ec){
-      const c = codeById(ec.id);
-      r.perCodice[ec.id]=(r.perCodice[ec.id]||0)+1;
-      if(c?.lavorativo){ r.lavorate++; M.lavorate++; }
-      if(c?.categoria==="Trasferta"){ r.trasferte++; M.trasferte++; }
-      if(c?.scalaCongedo){ r.congedo++; M.congedo++; }
-      if(c?.categoria==="Malattia"){ r.malattia++; M.malattia++; }
-      if(c?.categoria==="Riposo") r.riposi++;
-      if(c?.categoria==="Festività") r.festivi++;
-      if(rec.turno && c?.lavorativo) r.turniPomLav++;
+      const ids = ec.auto ? [ec.id] : codesOf(rec), cs = ids.map(codeById).filter(Boolean);
+      ids.forEach(id=>{ r.perCodice[id]=(r.perCodice[id]||0)+1; });
+      const any = f => cs.some(f);
+      if(any(c=>c.lavorativo)){ r.lavorate++; M.lavorate++; }
+      if(any(c=>c.categoria==="Trasferta")){ r.trasferte++; M.trasferte++; }
+      if(any(c=>c.scalaCongedo)){ r.congedo++; M.congedo++; }
+      if(any(c=>c.categoria==="Malattia")){ r.malattia++; M.malattia++; }
+      if(any(c=>c.categoria==="Riposo")) r.riposi++;
+      if(any(c=>c.categoria==="Festività")) r.festivi++;
+      if(rec.turno && any(c=>c.lavorativo)) r.turniPomLav++;
     } else if(ds<oggi && !rec.codice){ r.vuoti.push(ds); }
     if(rec.turno && (ds<=oggi || rec.codice)){ r.turniPom++; M.turniPom++; }
     if(rec.straordinarioMin){ r.straordMin+=rec.straordinarioMin; M.straordMin+=rec.straordinarioMin; r.straordGiorni.push(ds); }
@@ -664,16 +667,17 @@ function renderCal(){
     if(rec.permessoMin) tags.push(`<span class="tag" title="Permesso">P ${fmtHM(rec.permessoMin)}</span>`);
     if(rec.flessibilitaMin) tags.push(`<span class="tag fx" title="Flessibilità">F ${fmtHM(rec.flessibilitaMin)}</span>`);
     if(rec.note) tags.push(`<span class="tag" title="${esc(rec.note)}">✎</span>`);
-    const label = `${fmtDate(ds,true)}${c?", "+c.nome:""}${rec.turno?", turno pomeridiano":""}`;
-    h += `<button class="${cls.join(" ")}" ${out?"disabled":""} data-day="${ds}" style="--c:${c?esc(c.colore):"var(--muted)"}" aria-label="${esc(label)}">
+    const extra = (!ec?.auto && (rec.codiciExtra||[]).length) ? (rec.codiciExtra||[]).map(id=>codeById(id)).filter(Boolean) : [];
+    const label = `${fmtDate(ds,true)}${c?", "+[c,...extra].map(x=>x.nome).join(" e "):""}${rec.turno?", turno pomeridiano":""}`;
+    h += `<button class="${cls.join(" ")}" ${out?"disabled":""} data-day="${ds}" style="--c:${c?esc(c.colore):"var(--muted)"}${extra.length?`;--c2:${esc(extra[0].colore)}`:""}" aria-label="${esc(label)}">
       <span class="num">${d}</span>
-      ${c?`<span class="code">${esc(c.nome)}</span>`:""}
-      ${c && c.scalaCongedo && !ec.auto ? `<span class="det">${esc(rec.congedoAnno || congYearOf(ds) || "")}</span>` : rec.dettaglio && c && rec.dettaglio.trim().toLowerCase()!==c.nome.toLowerCase()?`<span class="det">${esc(rec.dettaglio)}</span>`:""}
+      ${c?(ec.auto?[c]:codesOf(rec).map(codeById).filter(Boolean)).map(x=>`<span class="code">${esc(x.nome)}</span>`).join(""):""}
+      ${c && c.scalaCongedo && !ec.auto ? `<span class="det">${esc(rec.congedoAnno || congYearOf(ds) || "")}</span>` : rec.dettaglio && c && !codesOf(rec).some(id=>codeById(id)?.nome.toLowerCase()===rec.dettaglio.trim().toLowerCase())?`<span class="det">${esc(rec.dettaglio)}</span>`:""}
       ${tags.length?`<span class="tags">${tags.join("")}</span>`:""}
     </button>`;
   }
   h += `</div>`;
-  const used = new Set(); for(let d=1; d<=dim(y,m); d++){ const ec=effCode(ymd(y,m,d)); if(ec) used.add(ec.id); }
+  const used = new Set(); for(let d=1; d<=dim(y,m); d++){ const ds2=ymd(y,m,d), ec=effCode(ds2); if(ec){ used.add(ec.id); if(!ec.auto) codesOf(dayRec(ds2)).forEach(id=>used.add(id)); } }
   h += `<div class="legend">${[...used].map(id=>{const c=codeById(id); return c?`<span class="pill" style="--c:${esc(c.colore)}"><span class="dot"></span>${esc(c.nome)}</span>`:""}).join("")}
     <span class="pill"><span class="tag pm" style="margin:0">POM</span>turno pomeridiano</span>
 </div></div>`;
@@ -704,8 +708,9 @@ function fitCodes(){
 addEventListener("resize",()=>{ if(UI.tab==="calendario" && S) fitCodes(); });
 function matchFiltro(ds, rec, ec, c){
   const f=UI.filtro, v=f.slice(2);
-  if(f.startsWith("c:")) return ec && ec.id===v;
-  if(f.startsWith("k:")) return c && c.categoria===v;
+  const ids = ec ? (ec.auto ? [ec.id] : codesOf(rec)) : [];
+  if(f.startsWith("c:")) return ids.includes(v);
+  if(f.startsWith("k:")) return ids.some(id=>codeById(id)?.categoria===v);
   if(f==="x:turno") return !!rec.turno;
   if(f==="x:straord") return !!rec.straordinarioMin;
   if(f==="x:perm") return !!rec.permessoMin;
@@ -720,15 +725,15 @@ function stepMonth(n){
   UI.year=y; UI.month=m; renderCal();
 }
 let _usage=null, _usageAt=null;
-function usage(){ if(_usageAt===S.meta.ultimaModifica && _usage) return _usage; const u={}; for(const y of Object.keys(S.anni)) for(const r of Object.values(S.anni[y].giorni)) if(r.codice) u[r.codice]=(u[r.codice]||0)+1; _usage=u; _usageAt=S.meta.ultimaModifica; return u; }
+function usage(){ if(_usageAt===S.meta.ultimaModifica && _usage) return _usage; const u={}; for(const y of Object.keys(S.anni)) for(const r of Object.values(S.anni[y].giorni)) codesOf(r).forEach(id=>{ u[id]=(u[id]||0)+1; }); _usage=u; _usageAt=S.meta.ultimaModifica; return u; }
 
 /* ---------- editor giornata ---------- */
 function openDay(ds){
   const rec = clone(dayRec(ds)||{}), ec = effCode(ds);
   const L = congedoLedger();
-  const active = S.config.codici.filter(c=>c.attivo || c.id===rec.codice);
+  const active = S.config.codici.filter(c=>c.attivo || codesOf(rec).includes(c.id));
   const groups = {}; active.forEach(c=>(groups[c.categoria] ||= []).push(c));
-  let sel = rec.codice || "";
+  let selArr = codesOf(rec), sel = selArr[0] || "";
   const oH=Math.floor((rec.straordinarioMin||0)/60), oM=(rec.straordinarioMin||0)%60;
   const pH=Math.floor((rec.permessoMin||0)/60), pM=(rec.permessoMin||0)%60;
   const f1=(rec.straordinarioFasce||[])[0]||{}, pf=(rec.permessoFascia)||{}, ff=(rec.flessibilitaFascia)||{};
@@ -737,8 +742,9 @@ function openDay(ds){
     <div class="row" style="justify-content:space-between"><h3 id="shT">${esc(fmtDate(ds,true))}</h3><button class="btn ghost" id="shX" aria-label="Chiudi">✕</button></div>
     ${ec&&ec.auto?`<p class="notice small" style="margin:0">Oggi risulta <b>${esc(codeById(ec.id).nome)}</b> in automatico. Scegli un codice per registrarlo diversamente.</p>`:""}
     <div class="stack" style="gap:8px"><span class="lbl">Stato della giornata</span>
-      <div class="chips" id="chips"><button class="chip" data-c="" aria-pressed="${sel===""}">Nessuno</button>
-      ${Object.entries(groups).map(([k,cs])=>cs.map(c=>`<button class="chip" data-c="${esc(c.id)}" style="--c:${esc(c.colore)}" aria-pressed="${sel===c.id}"><span class="dot"></span>${esc(c.nome)}</button>`).join("")).join("")}</div></div>
+      <span class="small muted">Puoi sceglierne più di uno (es. Corso e Trasferta). Il congedo si sceglie da solo.</span>
+      <div class="chips" id="chips"><button class="chip" data-c="" aria-pressed="${!selArr.length}">Nessuno</button>
+      ${Object.entries(groups).map(([k,cs])=>cs.map(c=>`<button class="chip" data-c="${esc(c.id)}" style="--c:${esc(c.colore)}" aria-pressed="${selArr.includes(c.id)}"><span class="dot"></span>${esc(c.nome)}</button>`).join("")).join("")}</div></div>
     <div id="congBox" class="stack" style="gap:8px" hidden><span class="lbl">Scala il giorno dal congedo dell'anno</span><div class="chips" id="congYears"></div></div>
     <div id="altroBox" class="stack" style="gap:14px">
     <label class="switch"><input type="checkbox" id="fTurno" ${rec.turno?"checked":""}> Turno pomeridiano</label>
@@ -792,7 +798,14 @@ function openDay(ds){
   $("#shX").onclick=close; $("#shCancel").onclick=close;
   $("#scrim").onclick = e=>{ if(e.target.id==="scrim") close(); };
   document.addEventListener("keydown", function k(e){ if(e.key==="Escape"){ close(); document.removeEventListener("keydown",k); } });
-  $("#chips").onclick = e=>{ const b=e.target.closest(".chip"); if(!b) return; sel=b.dataset.c; $("#chips").querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed", x===b)); congMode(); congInfo(); detVis(); };
+  $("#chips").onclick = e=>{ const b=e.target.closest(".chip"); if(!b) return; const id=b.dataset.c;
+    if(!id) selArr=[];
+    else if(selArr.includes(id)) selArr=selArr.filter(x=>x!==id);
+    else if(codeById(id)?.scalaCongedo) selArr=[id];
+    else selArr=[...selArr.filter(x=>!codeById(x)?.scalaCongedo), id];
+    sel = selArr[0] || "";
+    $("#chips").querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed", x.dataset.c ? selArr.includes(x.dataset.c) : !selArr.length));
+    congMode(); congInfo(); detVis(); };
   const span = (a,b)=>{ if(!a||!b) return null; const [h1,m1]=a.split(":").map(Number),[h2,m2]=b.split(":").map(Number); let d=(h2*60+m2)-(h1*60+m1); if(d<0) d+=1440; return d; };
   const fill = (a,b,H,Mi)=>()=>{ const d=span($(a).value,$(b).value); if(d!=null){ $(H).value=Math.floor(d/60)||""; $(Mi).value=d%60||""; } };
   ["#oDa","#oA"].forEach(s=>$(s).onchange=fill("#oDa","#oA","#oH","#oM"));
@@ -803,6 +816,7 @@ function openDay(ds){
     const y=ds.slice(0,4); S.anni[y] ||= {giorni:{}};
     const n = {};
     if(sel) n.codice = sel;
+    if(selArr.length>1) n.codiciExtra = selArr.slice(1);
     const isCong = !!codeById(sel)?.scalaCongedo;
     if(isCong){
       if(congAnno !== fifo() || rec.congedoAnno) n.congedoAnno = congAnno;
@@ -859,9 +873,9 @@ function renderReport(){
   const periodo = R.tipo==="anno" ? `Anno ${R.anno}` : R.tipo==="mese" ? `${MESI[R.mese-1]} ${R.anno}` : `Dal ${fmtDate(da)} al ${fmtDate(a)}`;
 
   let h = `<div class="card" style="margin-bottom:14px;padding:12px"><div class="row">
-    <div class="row" role="group" aria-label="Periodo">${["anno","mese","intervallo"].map(t=>`<button class="btn sm ${R.tipo===t?"primary":""}" data-rt="${t}">${t[0].toUpperCase()+t.slice(1)}</button>`).join("")}</div>
-    ${R.tipo!=="intervallo"?`<select id="rAnno" aria-label="Anno">${ys.map(y=>`<option ${y===R.anno?"selected":""}>${y}</option>`).join("")}</select>`:""}
+    <div class="row" role="group" aria-label="Periodo">${["mese","anno","intervallo"].map(t=>`<button class="btn sm ${R.tipo===t?"primary":""}" data-rt="${t}">${t[0].toUpperCase()+t.slice(1)}</button>`).join("")}</div>
     ${R.tipo==="mese"?`<select id="rMese" aria-label="Mese">${MESI.map((n,i)=>`<option value="${i+1}" ${i+1===R.mese?"selected":""}>${n}</option>`).join("")}</select>`:""}
+    ${R.tipo!=="intervallo"?`<select id="rAnno" aria-label="Anno">${ys.map(y=>`<option ${y===R.anno?"selected":""}>${y}</option>`).join("")}</select>`:""}
     ${R.tipo==="intervallo"?`<label class="small">dal <input type="date" id="rDa" value="${esc(R.da||S.config.dataInizio)}" min="${S.config.dataInizio}"></label><label class="small">al <input type="date" id="rA" value="${esc(R.a||oggi)}"></label>`:""}
   </div><p class="small muted" style="margin:8px 0 0">${esc(periodo)} · dati dal ${fmtDate(da)} al ${fmtDate(a)}${a>oggi?" (giorni futuri esclusi dai conteggi automatici)":""}</p></div>`;
 
@@ -1113,8 +1127,8 @@ function loadXLSX(){ return xlsxP ||= new Promise((res,rej)=>{ if(window.XLSX) r
 function giornateRows(){
   const out=[]; const ys=Object.keys(S.anni).sort();
   for(const y of ys) for(const ds of Object.keys(S.anni[y].giorni).sort()){
-    const r=S.anni[y].giorni[ds], c=codeById(r.codice);
-    out.push({ Data:fmtDate(ds), Giorno:GIORNI[dow(ds)], Codice:c?c.nome:(r.codice||""), Categoria:c?c.categoria:"",
+    const r=S.anni[y].giorni[ds], cs=codesOf(r).map(id=>codeById(id)||{nome:id,categoria:""});
+    out.push({ Data:fmtDate(ds), Giorno:GIORNI[dow(ds)], Codice:cs.map(c=>c.nome).join(" + "), Categoria:[...new Set(cs.map(c=>c.categoria))].join(" + "),
       "Turno pomeridiano":r.turno?"Sì":"", "Straordinario (h:mm)":r.straordinarioMin?fmtHM(r.straordinarioMin):"", "Straordinario (min)":r.straordinarioMin||"",
       "Permesso (h:mm)":r.permessoMin?fmtHM(r.permessoMin):"", "Permesso (min)":r.permessoMin||"",
       "Flessibilità (h:mm)":r.flessibilitaMin?fmtHM(r.flessibilitaMin):"", "Flessibilità (min)":r.flessibilitaMin||"", Attività:r.dettaglio||"", Mezzi:(r.mezzi||[]).join(", "), Note:r.note||"", Origine:r.origine||"" });
@@ -1140,7 +1154,7 @@ async function exportXLSX(){
     const aoa=[[`REGISTRO PRESENZE ${y}`],[],["Mese",...Array.from({length:31},(_,i)=>i+1)]];
     for(let m=1;m<=12;m++){ const row=[MESI[m-1]], row2=["  turno / straord."];
       for(let d=1;d<=31;d++){ if(d>dim(y,m)){row.push("");row2.push("");continue;} const ds=ymd(y,m,d); const ec=effCode(ds); const r=dayRec(ds)||{};
-        row.push(ds<S.config.dataInizio?"":ec?(codeById(ec.id)?.nome||ec.id):""); row2.push([r.turno?"POM":"", r.straordinarioMin?"+"+fmtHM(r.straordinarioMin):""].filter(Boolean).join(" ")); }
+        row.push(ds<S.config.dataInizio?"":ec?(ec.auto?[ec.id]:codesOf(r)).map(id=>codeById(id)?.nome||id).join(" + "):""); row2.push([r.turno?"POM":"", r.straordinarioMin?"+"+fmtHM(r.straordinarioMin):""].filter(Boolean).join(" ")); }
       aoa.push(row,row2); }
     const ws=X.utils.aoa_to_sheet(aoa); ws["!cols"]=[{wch:16},...Array(31).fill({wch:11})];
     X.utils.book_append_sheet(wb, ws, `Registro ${y}`);
@@ -1166,7 +1180,7 @@ async function analyzeExcel(file){
   if(wb.Sheets["Giornate"]){ // formato esportato dall'app
     for(const r of X.utils.sheet_to_json(wb.Sheets["Giornate"],{defval:""})){
       const ds=parseDateCell(r.Data,X); if(!ds) continue; const n={};
-      if(r.Codice){ const c=findCode(r.Codice); if(c) n.codice=c.id; else { unknown[r.Codice]=(unknown[r.Codice]||0)+1; n._ignoto=String(r.Codice); } }
+      if(r.Codice){ for(const part of String(r.Codice).split("+").map(x=>x.trim()).filter(Boolean)){ const c=findCode(part); if(c){ if(!n.codice) n.codice=c.id; else (n.codiciExtra ||= []).push(c.id); } else { unknown[part]=(unknown[part]||0)+1; n._ignoto ||= part; } } }
       if(String(r["Turno pomeridiano"]).toLowerCase().startsWith("s")) n.turno="pomeriggio";
       const om=hmToMin(r["Straordinario (min)"]!==""?r["Straordinario (min)"]:r["Straordinario (h:mm)"]); if(om) n.straordinarioMin=om;
       const pm=hmToMin(r["Permesso (min)"]!==""?r["Permesso (min)"]:r["Permesso (h:mm)"]); if(pm) n.permessoMin=pm;
