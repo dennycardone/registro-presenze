@@ -130,6 +130,7 @@ td.n,th.n{text-align:right}
 .tag{font-size:10px;font-weight:600;padding:1px 5px;border-radius:4px;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-2);line-height:1.3}
 .tag.pm{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .tag.ot{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,var(--line))}
+.tag.fx{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}
 @media (max-width:560px){
   .calbar{grid-template-columns:auto minmax(0,1fr) minmax(0,1.3fr) minmax(0,.95fr);gap:5px}
   .calbar select,.calbar .btn{font-size:13.5px;height:40px;padding-inline:5px}
@@ -181,6 +182,9 @@ html.phone .sheet h3{font-size:20px}
 .rgrid>*,.tiles>*{min-width:0}
 .hbar{grid-template-columns:minmax(70px,150px) minmax(0,1fr) auto}
 .card h2{font-size:21px;margin-bottom:10px;text-transform:uppercase;letter-spacing:.03em}
+.semlist{display:flex;flex-direction:column;gap:8px;margin-bottom:6px}
+.sem{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface-2)}
+.sem .kv{margin-top:6px;font-size:13.5px}
 .kv{display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-size:14px}
 .kv dt{color:var(--ink-2)} .kv dd{margin:0;font-weight:600;text-align:right}
 .chart{width:100%;height:auto;display:block}
@@ -499,6 +503,19 @@ function permessiPeriodo(da,a){
   while(y<y2 || (y===y2 && m<=m2)){ if(ymd(y,m,1)>oggi) break; const p=permessiMese(y,m); if(p.spettanti){ r.spettanti+=p.spettanti; r.usati+=p.usati; r.persi+=p.persi; r.mesi++; } m++; if(m>12){m=1;y++;} }
   return r;
 }
+/** Straordinario: si accumula per semestre (gen–giu, lug–dic) e si azzera il 1° gennaio e il 1° luglio.
+ *  La flessibilità si usa come un permesso ma scala dal saldo straordinario del semestre. */
+const semKey = ds => ds.slice(0,4)+(+ds.slice(5,7)<=6?"-1":"-2");
+const semRange = k => { const y=+k.slice(0,4), h=+k.slice(5); return h===1?[ymd(y,1,1),ymd(y,6,30)]:[ymd(y,7,1),ymd(y,12,31)]; };
+const semNome = k => (k.endsWith("-1")?"Gennaio–giugno ":"Luglio–dicembre ")+k.slice(0,4);
+function semestre(k){
+  let [da,a]=semRange(k); if(da<S.config.dataInizio) da=S.config.dataInizio;
+  let maturato=0, flex=0;
+  if(a>=da) for(const ds of dates(da,a)){ const r=dayRec(ds); if(!r) continue; maturato+=r.straordinarioMin||0; flex+=r.flessibilitaMin||0; }
+  const saldo=maturato-flex, chiuso=semRange(k)[1]<todayStr();
+  return {k, nome:semNome(k), maturato, flex, saldo, chiuso, azzerato: chiuso?Math.max(0,saldo):0};
+}
+function semestriTra(da,a){ const out=[]; let k=semKey(da<S.config.dataInizio?S.config.dataInizio:da); const end=semKey(a); while(k<=end){ out.push(k); const y=+k.slice(0,4); k = k.endsWith("-1") ? y+"-2" : (y+1)+"-1"; } return out; }
 const tot = b => Object.values(b||{}).reduce((a,v)=>a+v,0);
 const bucketsTxt = b => { const e=Object.entries(b||{}).filter(([k,v])=>v!==0).sort(); return e.length? e.map(([k,v])=>`${k}: ${v}`).join(" · ") : "nessun residuo"; };
 
@@ -521,13 +538,13 @@ function stats(da, a){
   const oggi = todayStr(), start=S.config.dataInizio;
   if(da<start) da=start;
   const r = { da, a, perCodice:{}, lavorate:0, trasferte:0, congedo:0, malattia:0, riposi:0, festivi:0, turniPom:0, turniPomLav:0,
-              straordMin:0, straordGiorni:[], permessoMin:0, permessoGiorni:[], vuoti:[], mesi:{}, mezzi:{}, registrate:0 };
+              straordMin:0, straordGiorni:[], flexMin:0, flexGiorni:[], permessoMin:0, permessoGiorni:[], vuoti:[], mesi:{}, mezzi:{}, registrate:0 };
   if(a<da) return r;
   for(const ds of dates(da,a)){
     const rec = dayRec(ds) || {};
     const ec = effCode(ds);
     const mk = ds.slice(0,7);
-    const M = r.mesi[mk] ||= {lavorate:0,trasferte:0,congedo:0,malattia:0,straordMin:0,turniPom:0,permessoMin:0};
+    const M = r.mesi[mk] ||= {lavorate:0,trasferte:0,congedo:0,malattia:0,straordMin:0,flexMin:0,turniPom:0,permessoMin:0};
     if(ec && ec.auto && ds>oggi) { continue; }
     if(rec.codice) r.registrate++;
     if(ec){
@@ -543,6 +560,7 @@ function stats(da, a){
     } else if(ds<oggi && !rec.codice){ r.vuoti.push(ds); }
     if(rec.turno && (ds<=oggi || rec.codice)){ r.turniPom++; M.turniPom++; }
     if(rec.straordinarioMin){ r.straordMin+=rec.straordinarioMin; M.straordMin+=rec.straordinarioMin; r.straordGiorni.push(ds); }
+    if(rec.flessibilitaMin){ r.flexMin+=rec.flessibilitaMin; M.flexMin+=rec.flessibilitaMin; r.flexGiorni.push(ds); }
     if(rec.permessoMin){ r.permessoMin+=rec.permessoMin; M.permessoMin+=rec.permessoMin; r.permessoGiorni.push(ds); }
     for(const m of rec.mezzi||[]) r.mezzi[m]=(r.mezzi[m]||0)+1;
   }
@@ -610,7 +628,7 @@ function renderCal(){
       <option value="">Mostra tutti i giorni</option>
       <optgroup label="Codice">${filtri.map(c=>`<option value="c:${esc(c.id)}" ${UI.filtro==="c:"+c.id?"selected":""}>${esc(c.nome)}</option>`).join("")}</optgroup>
       <optgroup label="Categoria">${cats.map(c=>`<option value="k:${esc(c)}" ${UI.filtro==="k:"+c?"selected":""}>${esc(c)}</option>`).join("")}</optgroup>
-      <optgroup label="Altro"><option value="x:turno" ${UI.filtro==="x:turno"?"selected":""}>Turno pomeridiano</option><option value="x:straord" ${UI.filtro==="x:straord"?"selected":""}>Con straordinario</option><option value="x:perm" ${UI.filtro==="x:perm"?"selected":""}>Con permesso</option><option value="x:vuoti" ${UI.filtro==="x:vuoti"?"selected":""}>Senza registrazione</option></optgroup>
+      <optgroup label="Altro"><option value="x:turno" ${UI.filtro==="x:turno"?"selected":""}>Turno pomeridiano</option><option value="x:straord" ${UI.filtro==="x:straord"?"selected":""}>Con straordinario</option><option value="x:perm" ${UI.filtro==="x:perm"?"selected":""}>Con permesso</option><option value="x:flex" ${UI.filtro==="x:flex"?"selected":""}>Con flessibilità</option><option value="x:vuoti" ${UI.filtro==="x:vuoti"?"selected":""}>Senza registrazione</option></optgroup>
   </select></div>
   <div class="months" role="group" aria-label="Mesi">${MESI.map((n,i)=>`<button data-m="${i+1}" aria-pressed="${i+1===m}" ${i+1<firstM?"disabled":""}>${MESI3[i]}</button>`).join("")}</div>`;
 
@@ -619,7 +637,8 @@ function renderCal(){
   const permTxt = ymd(y,m,dim(y,m)) < oggi ? (pm.usati?` · permessi usati ${fmtHM(pm.usati)}`:"") : ` · permessi disponibili ${fmtHM(pm.residui)}`;
   h += `<div class="card calcard">
     <div class="monthhead"><h2>${MESI[m-1]} <small>${y}</small></h2>
-      <div class="msum">${ms.lavorate} lavorate · ${ms.congedo} congedo${ms.straordMin?` · straordinari ${fmtHM(ms.straordMin)}`:""}${permTxt}</div></div>`;
+      <div class="msum">${ms.lavorate} lavorate · ${ms.congedo} congedo${ms.straordMin?` · straordinari ${fmtHM(ms.straordMin)}`:""}${permTxt}</div>
+      <div class="msum">Saldo straordinario ${semNome(semKey(ymd(y,m,1))).toLowerCase()}: <b>${fmtHM(semestre(semKey(ymd(y,m,1))).saldo)}</b></div></div>`;
   const fd = S.config.preferenze.primoGiorno===0 ? 0 : 1;
   const order = fd===1 ? [1,2,3,4,5,6,0] : [0,1,2,3,4,5,6];
   h += `<div class="grid">${order.map(i=>`<div class="wd${i===0?" sun":""}">${WD1[i]}</div>`).join("")}`;
@@ -635,12 +654,13 @@ function renderCal(){
     if(rec.turno) tags.push(`<span class="tag pm" title="Turno pomeridiano">POM</span>`);
     if(rec.straordinarioMin) tags.push(`<span class="tag ot" title="Straordinario">+${fmtHM(rec.straordinarioMin)}</span>`);
     if(rec.permessoMin) tags.push(`<span class="tag" title="Permesso">P ${fmtHM(rec.permessoMin)}</span>`);
+    if(rec.flessibilitaMin) tags.push(`<span class="tag fx" title="Flessibilità">F ${fmtHM(rec.flessibilitaMin)}</span>`);
     if(rec.note) tags.push(`<span class="tag" title="${esc(rec.note)}">✎</span>`);
     const label = `${fmtDate(ds,true)}${c?", "+c.nome:""}${rec.turno?", turno pomeridiano":""}`;
     h += `<button class="${cls.join(" ")}" ${out?"disabled":""} data-day="${ds}" style="--c:${c?esc(c.colore):"var(--muted)"}" aria-label="${esc(label)}">
       <span class="num">${d}</span>
       ${c?`<span class="code">${esc(c.nome)}</span>`:""}
-      ${rec.dettaglio && c && c.id==="lavoro"?`<span class="det">${esc(rec.dettaglio)}</span>`:""}
+      ${rec.dettaglio && c && rec.dettaglio.trim().toLowerCase()!==c.nome.toLowerCase()?`<span class="det">${esc(rec.dettaglio)}</span>`:""}
       ${tags.length?`<span class="tags">${tags.join("")}</span>`:""}
     </button>`;
   }
@@ -681,6 +701,7 @@ function matchFiltro(ds, rec, ec, c){
   if(f==="x:turno") return !!rec.turno;
   if(f==="x:straord") return !!rec.straordinarioMin;
   if(f==="x:perm") return !!rec.permessoMin;
+  if(f==="x:flex") return !!rec.flessibilitaMin;
   if(f==="x:vuoti") return !ec && ds<=todayStr();
   return true;
 }
@@ -702,7 +723,8 @@ function openDay(ds){
   let sel = rec.codice || "";
   const oH=Math.floor((rec.straordinarioMin||0)/60), oM=(rec.straordinarioMin||0)%60;
   const pH=Math.floor((rec.permessoMin||0)/60), pM=(rec.permessoMin||0)%60;
-  const f1=(rec.straordinarioFasce||[])[0]||{}, pf=(rec.permessoFascia)||{};
+  const f1=(rec.straordinarioFasce||[])[0]||{}, pf=(rec.permessoFascia)||{}, ff=(rec.flessibilitaFascia)||{};
+  const xH=Math.floor((rec.flessibilitaMin||0)/60), xM=(rec.flessibilitaMin||0)%60;
   $("#modal").innerHTML = `<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="shT">
     <div class="row" style="justify-content:space-between"><h3 id="shT">${esc(fmtDate(ds,true))}</h3><button class="btn ghost" id="shX" aria-label="Chiudi">✕</button></div>
     ${ec&&ec.auto?`<p class="notice small" style="margin:0">Oggi risulta <b>${esc(codeById(ec.id).nome)}</b> in automatico. Scegli un codice per registrarlo diversamente.</p>`:""}
@@ -719,6 +741,10 @@ function openDay(ds){
         <span class="small muted" id="permInfo"></span>
         <div class="hm"><input type="number" id="pH" min="0" max="24" value="${pH||""}" placeholder="0" aria-label="Ore permesso"> h <input type="number" id="pM" min="0" max="59" value="${pM||""}" placeholder="0" aria-label="Minuti permesso"> min</div>
         <div class="hm small muted">dalle <input type="time" id="pDa" value="${esc(pf.dalle||"")}"> alle <input type="time" id="pA" value="${esc(pf.alle||"")}"></div></div>
+      <div class="stack" style="gap:6px"><span class="lbl">Flessibilità</span>
+        <span class="small muted" id="flexInfo"></span>
+        <div class="hm"><input type="number" id="xH" min="0" max="24" value="${xH||""}" placeholder="0" aria-label="Ore flessibilità"> h <input type="number" id="xM" min="0" max="59" value="${xM||""}" placeholder="0" aria-label="Minuti flessibilità"> min</div>
+        <div class="hm small muted">dalle <input type="time" id="xDa" value="${esc(ff.dalle||"")}"> alle <input type="time" id="xA" value="${esc(ff.alle||"")}"></div></div>
     </div>
     <label class="f">Note<textarea id="fNote" placeholder="Aggiungi una nota">${esc(rec.note||"")}</textarea></label>
     <div id="congInfo"></div>
@@ -741,7 +767,9 @@ function openDay(ds){
   };
   { const [py,pmm]=parts(ds); const pp=permessiMese(py,pmm), mine=dayRec(ds)?.permessoMin||0;
     $("#permInfo").textContent = `${MESI[pmm-1]}: disponibili ${fmtHM(pp.residui+mine)} su ${fmtHM(pp.spettanti)} (si azzerano il 1° del mese)`; }
-  const detVis=()=>{ $("#detBox").hidden = sel!=="lavoro"; };
+  { const sm=semestre(semKey(ds)), mine=dayRec(ds)?.flessibilitaMin||0;
+    $("#flexInfo").textContent = `Scala dallo straordinario. Saldo ${semNome(sm.k).toLowerCase()}: ${fmtHM(sm.saldo+mine)}`; }
+  const detVis=()=>{};
   congInfo(); detVis();
   const close = ()=>{ $("#modal").innerHTML=""; };
   $("#shX").onclick=close; $("#shCancel").onclick=close;
@@ -752,17 +780,21 @@ function openDay(ds){
   const fill = (a,b,H,Mi)=>()=>{ const d=span($(a).value,$(b).value); if(d!=null){ $(H).value=Math.floor(d/60)||""; $(Mi).value=d%60||""; } };
   ["#oDa","#oA"].forEach(s=>$(s).onchange=fill("#oDa","#oA","#oH","#oM"));
   ["#pDa","#pA"].forEach(s=>$(s).onchange=fill("#pDa","#pA","#pH","#pM"));
+  ["#xDa","#xA"].forEach(s=>$(s).onchange=fill("#xDa","#xA","#xH","#xM"));
   $("#shClear").onclick = ()=>{ const y=ds.slice(0,4); delete S.anni[y].giorni[ds]; Store.touch("anno:"+y); close(); render(); toast("Giornata svuotata"); };
   $("#shSave").onclick = ()=>{
     const y=ds.slice(0,4); S.anni[y] ||= {giorni:{}};
     const n = {};
     if(sel) n.codice = sel;
     if($("#fTurno").checked) n.turno = "pomeriggio";
-    const det = sel==="lavoro" ? $("#fDet").value.trim() : (rec.dettaglio||""); if(det){ n.dettaglio=det; const mz=estraiMezzi(det); if(mz.length) n.mezzi=mz; }
+    const det = $("#fDet").value.trim(); if(det){ n.dettaglio=det; const mz=estraiMezzi(det); if(mz.length) n.mezzi=mz; }
     const om=(+$("#oH").value||0)*60+(+$("#oM").value||0); if(om>0) n.straordinarioMin=om;
     if($("#oDa").value && $("#oA").value) n.straordinarioFasce=[{dalle:$("#oDa").value, alle:$("#oA").value}];
     const pm=(+$("#pH").value||0)*60+(+$("#pM").value||0); if(pm>0) n.permessoMin=pm;
     if($("#pDa").value && $("#pA").value) n.permessoFascia={dalle:$("#pDa").value, alle:$("#pA").value};
+    const xm=(+$("#xH").value||0)*60+(+$("#xM").value||0); if(xm>0) n.flessibilitaMin=xm;
+    if($("#xDa").value && $("#xA").value) n.flessibilitaFascia={dalle:$("#xDa").value, alle:$("#xA").value};
+    if(xm>0){ const sm=semestre(semKey(ds)); const disp=sm.saldo+(dayRec(ds)?.flessibilitaMin||0); if(xm>disp) toast(`Attenzione: flessibilità oltre il saldo straordinario (${fmtHM(disp)})`); }
     const note=$("#fNote").value.trim(); if(note) n.note=note;
     if(rec.residuoCalendario && sel===rec.codice) n.residuoCalendario=rec.residuoCalendario;
     const old = dayRec(ds);
@@ -812,7 +844,7 @@ function renderReport(){
 
   h += `<div class="tiles" style="margin-bottom:14px">
     <div class="tile"><span>Giornate lavorate</span><b>${st.lavorate}</b><small>di cui ${st.trasferte} in trasferta</small></div>
-    <div class="tile"><span>Straordinari</span><b>${fmtHM(st.straordMin)}</b><small>${st.straordGiorni.length} giornate</small></div>
+    <div class="tile"><span>Straordinari</span><b>${fmtHM(st.straordMin)}</b><small>saldo semestre in corso ${fmtHM(semestre(semKey(oggi)).saldo)}</small></div>
     <div class="tile"><span>Congedo usato</span><b>${st.congedo}</b><small>residuo ${tot(resFine)} giorni</small></div>
     <div class="tile"><span>Turni pomeridiani</span><b>${st.turniPomLav}</b><small>lavorati su ${st.turniPom} in calendario</small></div>
   </div>`;
@@ -828,10 +860,16 @@ function renderReport(){
   </section>`;
   // Straordinari
   h += `<section class="card"><h2>Straordinari</h2>
-    <dl class="kv"><dt>Totale nel periodo</dt><dd>${fmtOre(st.straordMin)}</dd><dt>Giornate con straordinario</dt><dd>${st.straordGiorni.length}</dd></dl>
+    <dl class="kv"><dt>Maturato nel periodo</dt><dd>${fmtHM(st.straordMin)}</dd><dt>Giornate con straordinario</dt><dd>${st.straordGiorni.length}</dd>
+      <dt>Flessibilità usata</dt><dd>${fmtHM(st.flexMin)}</dd><dt>Giornate di flessibilità</dt><dd>${st.flexGiorni.length}</dd></dl>
+    <p class="small muted" style="margin:10px 0 6px">Saldo per semestre: lo straordinario meno la flessibilità; si azzera il 1° gennaio e il 1° luglio.</p>
+    <div class="semlist">${semestriTra(da,a).map(k=>{const x=semestre(k);return `<div class="sem"><div class="row" style="justify-content:space-between"><b>${x.nome}</b><span class="pill" style="--c:${x.chiuso?"var(--muted)":"var(--good)"}">${x.chiuso?"azzerato":"in corso"}</span></div>
+      <dl class="kv"><dt>Maturato</dt><dd>${fmtHM(x.maturato)}</dd><dt>Flessibilità usata</dt><dd>${fmtHM(x.flex)}</dd><dt>${x.chiuso?"Saldo azzerato":"Saldo disponibile"}</dt><dd class="${x.saldo<0?"bad":""}">${fmtHM(x.saldo)}</dd></dl></div>`}).join("")}</div>
     ${mk.length>1&&st.straordMin?barChart(mk.map(k=>({l:MESI3[+k.slice(5)-1]+(mk.length>12?" "+k.slice(2,4):""), v:st.mesi[k].straordMin/60, lab:st.mesi[k].straordMin?fmtHM(st.mesi[k].straordMin):"", t:`${MESI[+k.slice(5)-1]} ${k.slice(0,4)}: ${fmtOre(st.mesi[k].straordMin)}`})),"ore"):""}
     ${st.straordGiorni.length?`<details style="margin-top:10px"><summary class="small" style="cursor:pointer">Giornate che hanno generato straordinario</summary><div class="tscroll"><table><tr><th>Data</th><th>Attività</th><th class="n">Ore</th></tr>
       ${st.straordGiorni.map(ds=>{const r=dayRec(ds);return `<tr><td>${fmtDate(ds)}</td><td>${esc(r.dettaglio||"")}</td><td class="n">${fmtHM(r.straordinarioMin)}</td></tr>`}).join("")}</table></div></details>`:""}
+    ${st.flexGiorni.length?`<details style="margin-top:6px"><summary class="small" style="cursor:pointer">Giornate con flessibilità</summary><div class="tscroll"><table><tr><th>Data</th><th>Attività</th><th class="n">Ore</th></tr>
+      ${st.flexGiorni.map(ds=>{const r=dayRec(ds);return `<tr><td>${fmtDate(ds)}</td><td>${esc(r.dettaglio||"")}</td><td class="n">${fmtHM(r.flessibilitaMin)}</td></tr>`}).join("")}</table></div></details>`:""}
   </section>`;
   // Congedo
   h += `<section class="card"><h2>Congedo (ferie)</h2>
@@ -845,10 +883,10 @@ function renderReport(){
   </section>`;
   // Permessi e assenze
   h += `<section class="card"><h2>Permessi e altre voci</h2>
-    <dl class="kv"><dt>Permessi spettanti al mese</dt><dd>${fmtOre(permOreMese(+a.slice(0,4))*60)}</dd>
-    <dt>Spettanti nel periodo (${PP.mesi} ${PP.mesi===1?"mese":"mesi"})</dt><dd>${fmtHM(PP.spettanti)}</dd>
+    <dl class="kv">${R.tipo!=="anno"?`<dt>Permessi spettanti al mese</dt><dd>${fmtOre(permOreMese(+a.slice(0,4))*60)}</dd>`:""}
+    <dt>${R.tipo==="anno"?"Permessi spettanti":`Spettanti nel periodo (${PP.mesi} ${PP.mesi===1?"mese":"mesi"})`}</dt><dd>${fmtHM(PP.spettanti)}</dd>
     <dt>Usati nel periodo</dt><dd>${fmtHM(PP.usati)}</dd>
-    ${pCur?`<dt>Ancora disponibili a ${MESI[curM-1].toLowerCase()}</dt><dd>${fmtHM(pCur.residui)}</dd>`:""}
+    ${pCur && R.tipo!=="anno"?`<dt>Ancora disponibili a ${MESI[curM-1].toLowerCase()}</dt><dd>${fmtHM(pCur.residui)}</dd>`:""}
     <dt>Non usati e azzerati</dt><dd>${fmtHM(PP.persi)}</dd>
     <dt>Malattia</dt><dd>${st.malattia} giorni</dd><dt>Riposi</dt><dd>${st.riposi} giorni</dd><dt>Festività</dt><dd>${st.festivi} giorni</dd><dt>Turni pomeridiani in calendario</dt><dd>${st.turniPom}</dd>
     <dt>Giorni senza registrazione</dt><dd class="${st.vuoti.length?"warn":""}">${st.vuoti.length}</dd></dl>
@@ -857,9 +895,9 @@ function renderReport(){
   h += `</div>`;
   // Andamento mensile
   if(mk.length>1) h += `<section class="card" style="margin-top:14px"><h2>Andamento mensile</h2><div class="tscroll"><table>
-    <tr><th>Mese</th><th class="n">Lavorate</th><th class="n">Trasferte</th><th class="n">Congedo</th><th class="n">Malattia</th><th class="n">Straord.</th><th class="n">Permessi</th><th class="n">Turni pom.</th></tr>
-    ${mk.map(k=>{const M=st.mesi[k];return `<tr><td>${MESI[+k.slice(5)-1]} ${k.slice(0,4)}</td><td class="n">${M.lavorate}</td><td class="n">${M.trasferte}</td><td class="n">${M.congedo}</td><td class="n">${M.malattia}</td><td class="n">${fmtHM(M.straordMin)}</td><td class="n">${fmtHM(M.permessoMin)} / ${fmtHM(permessiMese(+k.slice(0,4),+k.slice(5,7)).spettanti)}</td><td class="n">${M.turniPom}</td></tr>`}).join("")}
-    <tr><th>Totale</th><th class="n">${st.lavorate}</th><th class="n">${st.trasferte}</th><th class="n">${st.congedo}</th><th class="n">${st.malattia}</th><th class="n">${fmtHM(st.straordMin)}</th><th class="n">${fmtHM(st.permessoMin)}</th><th class="n">${st.turniPom}</th></tr>
+    <tr><th>Mese</th><th class="n">Lavorate</th><th class="n">Trasferte</th><th class="n">Congedo</th><th class="n">Malattia</th><th class="n">Straord.</th><th class="n">Flessib.</th><th class="n">Permessi</th><th class="n">Turni pom.</th></tr>
+    ${mk.map(k=>{const M=st.mesi[k];return `<tr><td>${MESI[+k.slice(5)-1]} ${k.slice(0,4)}</td><td class="n">${M.lavorate}</td><td class="n">${M.trasferte}</td><td class="n">${M.congedo}</td><td class="n">${M.malattia}</td><td class="n">${fmtHM(M.straordMin)}</td><td class="n">${fmtHM(M.flexMin)}</td><td class="n">${fmtHM(M.permessoMin)} / ${fmtHM(permessiMese(+k.slice(0,4),+k.slice(5,7)).spettanti)}</td><td class="n">${M.turniPom}</td></tr>`}).join("")}
+    <tr><th>Totale</th><th class="n">${st.lavorate}</th><th class="n">${st.trasferte}</th><th class="n">${st.congedo}</th><th class="n">${st.malattia}</th><th class="n">${fmtHM(st.straordMin)}</th><th class="n">${fmtHM(st.flexMin)}</th><th class="n">${fmtHM(st.permessoMin)}</th><th class="n">${st.turniPom}</th></tr>
   </table></div></section>`;
   // Mezzi
   const mz = Object.entries(st.mezzi).sort((x,y)=>y[1]-x[1]);
@@ -929,7 +967,7 @@ function setCodici(){
       <td><button class="btn sm danger" data-del="${i}" ${u[c.id]?"disabled title=\"Già usato: disattivalo invece di eliminarlo\"":""}>Elimina</button></td></tr>`).join("")}
     </table></div>
     <div class="row" style="margin-top:12px"><input type="text" id="newCode" placeholder="Nome del nuovo codice" class="grow" style="max-width:260px"><select id="newCat">${cats.map(k=>`<option>${esc(k)}</option>`).join("")}</select><button class="btn primary" id="addCode">Aggiungi codice</button></div>
-    <p class="small muted" style="margin:10px 0 0">Valore: quantità facoltativa associata al codice (ad esempio ore). Turno pomeridiano, straordinario e permesso si registrano dentro la giornata.</p></div>`;
+    <p class="small muted" style="margin:10px 0 0">Valore: quantità facoltativa associata al codice (ad esempio ore). Turno pomeridiano, straordinario, flessibilità e permesso si registrano dentro la giornata.</p></div>`;
   $("#setBody").querySelectorAll("tr[data-i] [data-k]").forEach(inp=>inp.onchange=()=>{
     const c = S.config.codici[+inp.closest("tr").dataset.i], k=inp.dataset.k;
     if(inp.type==="checkbox") c[k]=inp.checked;
@@ -1055,7 +1093,8 @@ function giornateRows(){
     const r=S.anni[y].giorni[ds], c=codeById(r.codice);
     out.push({ Data:fmtDate(ds), Giorno:GIORNI[dow(ds)], Codice:c?c.nome:(r.codice||""), Categoria:c?c.categoria:"",
       "Turno pomeridiano":r.turno?"Sì":"", "Straordinario (h:mm)":r.straordinarioMin?fmtHM(r.straordinarioMin):"", "Straordinario (min)":r.straordinarioMin||"",
-      "Permesso (h:mm)":r.permessoMin?fmtHM(r.permessoMin):"", "Permesso (min)":r.permessoMin||"", Attività:r.dettaglio||"", Mezzi:(r.mezzi||[]).join(", "), Note:r.note||"", Origine:r.origine||"" });
+      "Permesso (h:mm)":r.permessoMin?fmtHM(r.permessoMin):"", "Permesso (min)":r.permessoMin||"",
+      "Flessibilità (h:mm)":r.flessibilitaMin?fmtHM(r.flessibilitaMin):"", "Flessibilità (min)":r.flessibilitaMin||"", Attività:r.dettaglio||"", Mezzi:(r.mezzi||[]).join(", "), Note:r.note||"", Origine:r.origine||"" });
   }
   return out;
 }
@@ -1071,7 +1110,7 @@ async function exportXLSX(){
   const L=congedoLedger();
   // Riepilogo mensile
   const rie=[]; for(const y of yearsList(true)) for(let m=1;m<=12;m++){ const a=ymd(y,m,1), b=ymd(y,m,dim(y,m)); if(b<S.config.dataInizio) continue; const st=stats(a,b); if(a>todayStr() && !st.registrate) continue;
-    rie.push({Anno:y, Mese:MESI[m-1], "Giornate lavorate":st.lavorate, Trasferte:st.trasferte, Congedo:st.congedo, Malattia:st.malattia, "Straordinario (h:mm)":fmtHM(st.straordMin), "Permessi (h:mm)":fmtHM(st.permessoMin), "Turni pomeridiani":st.turniPom, "Congedo residuo a fine mese":tot(L.at(b<todayStr()?b:todayStr()))}); }
+    rie.push({Anno:y, Mese:MESI[m-1], "Giornate lavorate":st.lavorate, Trasferte:st.trasferte, Congedo:st.congedo, Malattia:st.malattia, "Straordinario (h:mm)":fmtHM(st.straordMin), "Flessibilità (h:mm)":fmtHM(st.flexMin), "Saldo straordinario semestre":fmtHM(semestre(semKey(b)).saldo), "Permessi (h:mm)":fmtHM(st.permessoMin), "Turni pomeridiani":st.turniPom, "Congedo residuo a fine mese":tot(L.at(b<todayStr()?b:todayStr()))}); }
   X.utils.book_append_sheet(wb, X.utils.json_to_sheet(rie), "Riepilogo mensile");
   // Griglia per anno, come il registro cartaceo
   for(const y of yearsList(true)){
@@ -1108,6 +1147,7 @@ async function analyzeExcel(file){
       if(String(r["Turno pomeridiano"]).toLowerCase().startsWith("s")) n.turno="pomeriggio";
       const om=hmToMin(r["Straordinario (min)"]!==""?r["Straordinario (min)"]:r["Straordinario (h:mm)"]); if(om) n.straordinarioMin=om;
       const pm=hmToMin(r["Permesso (min)"]!==""?r["Permesso (min)"]:r["Permesso (h:mm)"]); if(pm) n.permessoMin=pm;
+      const fx=hmToMin((r["Flessibilità (min)"]??"")!==""?r["Flessibilità (min)"]:(r["Flessibilità (h:mm)"]??"")); if(fx) n.flessibilitaMin=fx;
       if(r["Attività"]){ n.dettaglio=String(r["Attività"]); const mz=estraiMezzi(n.dettaglio); if(mz.length) n.mezzi=mz; }
       if(r.Note) n.note=String(r.Note);
       n.origine="importato da Excel"; recs[ds]=n; years.add(ds.slice(0,4));
