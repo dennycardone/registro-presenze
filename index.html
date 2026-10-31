@@ -61,6 +61,8 @@ nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surf
 nav.tabs button{flex:1;max-width:240px;height:var(--nav-h);border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12.5px;color:var(--muted);font-weight:500}
 nav.tabs button b{font-size:20px;line-height:1;font-weight:400}
 nav.tabs button[aria-current="page"]{color:var(--accent);font-weight:600}
+nav.tabs button{position:relative}
+nav.tabs button.needbk b::after{content:"";position:absolute;width:9px;height:9px;border-radius:50%;background:var(--bad);margin-left:-4px;margin-top:-2px;border:2px solid var(--surface)}
 @media (min-width:900px){html:not(.phone) nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);bottom:auto;border-top:0;border-bottom:1px solid var(--line);justify-content:flex-start;gap:4px;padding:0 max(16px,calc((100vw - 1100px)/2 + 16px))}
 html:not(.phone) nav.tabs button{flex:0 0 auto;flex-direction:row;height:48px;gap:8px;font-size:14.5px;padding:0 14px;border-bottom:2px solid transparent}
 html:not(.phone) nav.tabs button b{font-size:17px}
@@ -601,7 +603,8 @@ function applyTheme(){
 function render(){
   document.body.classList.toggle("calmode", UI.tab==="calendario");
   document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-current", b.dataset.tab===UI.tab?"page":"false"));
-  if(!S){ $("#view").innerHTML = emptyState(); return; }
+  if(S && Store.mode==="local"){ const last=S.meta.ultimaEsportazione?Date.parse(S.meta.ultimaEsportazione):0; const old=Date.now()-last>14*864e5; $('#tabs [data-tab="impostazioni"]').classList.toggle("needbk", old); }
+  if(!S){ $("#view").innerHTML = emptyState(); fetch("seed.json",{cache:"no-store"}).then(r=>{ if(r.ok && $("#loadSeed")) $("#loadSeed").hidden=false; }).catch(()=>{}); return; }
   applyTheme();
     if(UI.tab==="calendario") renderCal();
   else if(UI.tab==="report") renderReport();
@@ -610,9 +613,9 @@ function render(){
 function emptyState(){
   return `<div class="card empty stack" style="align-items:center">
     <h2 style="font-size:24px">Il registro è vuoto</h2>
-    <p class="muted" style="max-width:46ch;margin:0">Carica i dati importati dal tuo calendario oppure ripristina un backup salvato in precedenza.</p>
+    <p class="muted" style="max-width:46ch;margin:0">Ripristina un backup salvato in precedenza (Impostazioni → Backup e dati → Esporta backup).</p>
     <div class="row" style="justify-content:center">
-      <button class="btn primary" id="loadSeed">Carica dati dal calendario</button>
+      <button class="btn primary" id="loadSeed" hidden>Carica dati dal calendario</button>
       <label class="btn">Ripristina backup<input type="file" accept=".json,application/json" id="emptyRestore" hidden></label>
     </div><p class="small bad" id="emptyMsg"></p></div>`;
 }
@@ -856,6 +859,7 @@ function openDay(ds){
     if($("#pDa").value && $("#pA").value) n.permessoFascia={dalle:$("#pDa").value, alle:$("#pA").value};
     const xm=(+$("#xH").value||0)*60+(+$("#xM").value||0); if(xm>0) n.flessibilitaMin=xm;
     if($("#xDa").value && $("#xA").value) n.flessibilitaFascia={dalle:$("#xDa").value, alle:$("#xA").value};
+    if(pm>0){ const [py,pmm]=parts(ds); const pp=permessiMese(py,pmm); const disp=pp.residui+(dayRec(ds)?.permessoMin||0); if(pm>disp) toast(`Attenzione: permessi oltre le ${fmtHM(pp.spettanti)} del mese (disponibili ${fmtHM(disp)})`); }
     if(xm>0){ const sm=semestre(semKey(ds)); const disp=sm.saldo+(dayRec(ds)?.flessibilitaMin||0); if(xm>disp) toast(`Attenzione: flessibilità oltre il saldo straordinario (${fmtHM(disp)})`); }
     const note=$("#fNote").value.trim(); if(note) n.note=note;
     }
@@ -935,7 +939,9 @@ function renderReport(){
       ${st.flexGiorni.map(ds=>{const r=dayRec(ds);return `<tr><td>${fmtDate(ds)}</td><td>${esc(r.dettaglio||"")}</td><td class="n">${fmtHM(r.flessibilitaMin)}</td></tr>`}).join("")}</table></div></details>`:""}
   </section>`;
   // Congedo
+  const cyP=+oggi.slice(0,4), spMancante = cyP>+S.config.dataInizio.slice(0,4) && !(+S.config.parametri[cyP]?.congedoSpettante);
   h += `<section class="card"><h2>Congedo (ferie)</h2>
+    ${spMancante?`<p class="notice warn small" style="margin:0 0 10px">Il congedo spettante del ${cyP} non è impostato: il residuo non lo comprende. Impostalo in Impostazioni → Parametri annuali.</p>`:""}
     <dl class="kv"><dt>Residuo a inizio periodo</dt><dd>${tot(resIni)}</dd>
     ${accrIn?`<dt>Spettanza accreditata nel periodo</dt><dd>+${accrIn}</dd>`:""}
     <dt>Disponibile nel periodo</dt><dd>${tot(resIni)+accrIn}</dd>
@@ -1122,6 +1128,7 @@ async function exportJSON(){
 function setBackup(){
   const cloud = Store.mode==="cloud";
   $("#setBody").innerHTML = `<div class="card"><h2>Backup e dati</h2>
+    ${!cloud && (!S.meta.ultimaEsportazione || Date.now()-Date.parse(S.meta.ultimaEsportazione)>14*864e5)?`<p class="notice bad" style="margin:0 0 12px"><b>Backup da fare:</b> ${S.meta.ultimaEsportazione?"l'ultimo è di più di 14 giorni fa":"non hai ancora esportato nessun backup"}. Il pallino rosso su Impostazioni sparisce dopo l'esportazione.</p>`:""}
     <p class="notice ${cloud?"":"warn"}" style="margin:0 0 12px">${cloud?"I dati sono salvati nel cloud del tuo account e si sincronizzano su tutti i dispositivi da cui apri l'app. Un backup ogni tanto resta comunque una buona abitudine.":"<b>I dati sono salvati solo su questo dispositivo, in questo browser.</b> Se svuoti i dati del browser o cambi telefono li perdi: esporta un backup regolarmente."}</p>
     <div class="row"><button class="btn primary" id="bExp">📥 Esporta backup</button>
     <label class="btn">📤 Importa backup<input type="file" id="bImp" accept=".json,application/json" hidden></label></div>
@@ -1316,7 +1323,7 @@ function setGenerali(){
 }
 function setReset(){
   $("#setBody").innerHTML = `<div class="card"><h2>⚠️ Ripristina applicazione</h2>
-    <p style="margin:0 0 12px">Riporta il registro allo stato iniziale. Puoi scegliere se ricaricare i dati importati dal tuo calendario il 30/09/2026 oppure partire da un registro vuoto. Codici e parametri tornano quelli iniziali.</p>
+    <p style="margin:0 0 12px">Svuota il registro e riparti da zero, mantenendo codici e parametri. Prima del ripristino l'app salva una copia automatica dei dati attuali.</p>
     <div id="rs"><button class="btn danger" id="r1">Voglio ripristinare l'applicazione</button></div></div>`;
   $("#r1").onclick=()=>{ $("#rs").innerHTML=`<div class="notice warn"><p style="margin:0 0 10px"><b>Passo 1 di 2.</b> Tutte le modifiche fatte dopo l'import andranno perse. Ti consiglio di scaricare prima un backup.</p>
     <div class="row"><button class="btn" id="rBk">📥 Scarica backup</button><button class="btn" id="rNo">Annulla</button><button class="btn danger" id="r2">Continua</button></div></div>`;
@@ -1324,6 +1331,7 @@ function setReset(){
     $("#r2").onclick=()=>{ $("#rs").innerHTML=`<div class="notice bad"><p style="margin:0 0 10px"><b>Passo 2 di 2.</b> Scrivi <b>RIPRISTINA</b> per confermare.</p>
       <div class="row"><input type="text" id="rTxt" autocomplete="off" aria-label="Conferma"><select id="rMode"><option value="seed">Ricarica i dati del calendario</option><option value="empty">Registro vuoto</option></select>
       <button class="btn" id="rNo2">Annulla</button><button class="btn danger solid" id="r3" disabled>Ripristina ora</button></div></div>`;
+      fetchSeed().then(sd=>{ if(!sd){ const o=$('#rMode option[value="seed"]'); if(o) o.remove(); } });
       $("#rTxt").oninput=e=>$("#r3").disabled=e.target.value.trim()!=="RIPRISTINA";
       $("#rNo2").onclick=setReset;
       $("#r3").onclick=async ()=>{ $("#r3").disabled=true; await Store.saveAutoBackup(); const seed=await fetchSeed();
@@ -1341,6 +1349,16 @@ document.documentElement.lang ||= "it";
   const h = location.hash.slice(1); if(["calendario","report","impostazioni"].includes(h)) UI.tab=h;
   try{ await Store.init(); }catch(e){ S=null; Store.setStatus("err","Impossibile leggere i dati: ricarica la pagina."); }
   Store.setStatus(Store.status);
+  if(S){ // nuovo anno: crea il calendario dell'anno in corso se manca
+    const cy=todayStr().slice(0,4), ys=Object.keys(S.anni).map(Number);
+    if(!S.anni[cy] && +cy>Math.max(...ys)){
+      const prev=String(+cy-1);
+      S.anni[cy]={giorni:{}};
+      S.config.parametri[cy] ||= {congedoSpettante:0, permessiMensiliOre:+(S.config.parametri[prev]?.permessiMensiliOre ?? 4), note:"Da completare: congedo spettante"};
+      Store.touch("anno:"+cy); Store.touch("config");
+      setTimeout(()=>toast(`Creato il ${cy}. Imposta il congedo spettante in Impostazioni → Parametri annuali.`),800);
+    }
+  }
   if(S && _migrato){ _migrato=false; Store.touch("config"); for(const y of Object.keys(S.anni)) Store.touch("anno:"+y); }
   render();
 })();
