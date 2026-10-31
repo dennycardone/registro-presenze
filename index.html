@@ -1011,9 +1011,10 @@ document.addEventListener("touchstart",e=>{ if(!e.target.closest("[data-tip]")) 
 /* ============================ IMPOSTAZIONI ============================ */
 const SEZ = [["codici","Codici"],["anni","Anni"],["parametri","Parametri annuali"],["backup","Backup e dati"],["excel","Excel e CSV"],["dati","Gestione dati"],["generali","Aspetto e preferenze"],["reset","Ripristina applicazione"]];
 function renderSettings(){
-  let h = `<div class="set"><nav class="setnav" aria-label="Sezioni impostazioni">${SEZ.map(([k,n])=>`<button data-s="${k}" aria-current="${UI.setSec===k}">${n}</button>`).join("")}</nav><div id="setBody" class="stack" style="min-width:0"></div></div>`;
+  let h = `${_installEvt?`<div class="card row" style="justify-content:space-between;margin-bottom:14px"><span><b>Installa l'app</b><br><span class="small muted">Si apre dalla schermata Home, a schermo intero.</span></span><button class="btn primary" id="installBtn">Installa</button></div>`:""}<div class="set"><nav class="setnav" aria-label="Sezioni impostazioni">${SEZ.map(([k,n])=>`<button data-s="${k}" aria-current="${UI.setSec===k}">${n}</button>`).join("")}</nav><div id="setBody" class="stack" style="min-width:0"></div></div>`;
   $("#view").innerHTML = h;
   document.querySelectorAll(".setnav button").forEach(b=>b.onclick=()=>{ UI.setSec=b.dataset.s; renderSettings(); });
+  $("#installBtn") && ($("#installBtn").onclick=async()=>{ const e=_installEvt; if(!e) return; _installEvt=null; e.prompt(); try{ const r=await e.userChoice; if(r.outcome==="accepted") toast("App installata"); }catch(err){} renderSettings(); });
   ({codici:setCodici, anni:setAnni, parametri:setParametri, backup:setBackup, excel:setExcel, dati:setDati, generali:setGenerali, reset:setReset})[UI.setSec]();
 }
 const CATS = ["Presenza","Trasferta","Formazione","Congedo","Malattia","Riposo","Festività","Permesso","Altro"];
@@ -1343,6 +1344,10 @@ function setReset(){
   };
 }
 
+/* Pulsante Installa: avvia direttamente l'installazione quando il browser lo permette */
+let _installEvt=null;
+addEventListener("beforeinstallprompt", e=>{ e.preventDefault(); _installEvt=e; if(UI.tab==="impostazioni" && S) renderSettings(); });
+addEventListener("appinstalled", ()=>{ _installEvt=null; if(UI.tab==="impostazioni" && S) renderSettings(); });
 /* ============================ avvio ============================ */
 document.documentElement.lang ||= "it";
 (async function boot(){
