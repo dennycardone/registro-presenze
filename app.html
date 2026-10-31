@@ -7,7 +7,7 @@
   --bg:#EDF0F3; --surface:#FFFFFF; --surface-2:#F6F8FA; --ink:#15202B; --ink-2:#465463; --muted:#76818F;
   --line:#D6DDE4; --accent:#1D5C96; --accent-ink:#FFFFFF; --accent-soft:#DCE8F4;
   --good:#23794A; --warn:#A2640F; --bad:#B8362B; --today:#E0A526;
-  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-display:"Barlow Condensed","Roboto Condensed","sans-serif-condensed","Arial Narrow","DejaVu Sans Condensed",sans-serif;
   --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --r:10px; --nav-h:62px;
   color-scheme:light;
@@ -22,6 +22,9 @@
   --good:#5CC48A; --warn:#E3A54A; --bad:#EE7B70; --today:#F0BE4E; color-scheme:dark}
 *{box-sizing:border-box}
 html,body{background:var(--bg);color:var(--ink)}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
+button,.chip,.day,nav.tabs,.months,.setnav{touch-action:manipulation;-webkit-user-select:none;user-select:none}
 body{font-family:var(--f-body);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
@@ -35,21 +38,19 @@ h1,h2,h3{font-family:var(--f-display);font-weight:600;letter-spacing:.01em;margi
 .brand h1{font-size:26px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
 .brand span{color:var(--muted);font-size:13px}
 .sync{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-2);background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:4px 10px}
-.sync i{width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block}
-.sync.ok i{background:var(--good)} .sync.pending i{background:var(--warn)} .sync.err i{background:var(--bad)}
+.sync>i{width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block}
+.sync.ok>i{background:var(--good)} .sync.pending>i{background:var(--warn)} .sync.err>i{background:var(--bad)}
 
 /* nav */
 nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0px)}
 nav.tabs button{flex:1;max-width:240px;height:var(--nav-h);border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12.5px;color:var(--muted);font-weight:500}
 nav.tabs button b{font-size:20px;line-height:1;font-weight:400}
 nav.tabs button[aria-current="page"]{color:var(--accent);font-weight:600}
-@media (min-width:900px){
-  nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);bottom:auto;border-top:0;border-bottom:1px solid var(--line);justify-content:flex-start;gap:4px;padding:0 max(16px,calc((100vw - 1100px)/2 + 16px))}
-  nav.tabs button{flex:0 0 auto;flex-direction:row;height:48px;gap:8px;font-size:14.5px;padding:0 14px;border-bottom:2px solid transparent}
-  nav.tabs button b{font-size:17px}
-  nav.tabs button[aria-current="page"]{border-bottom-color:var(--accent)}
-  .wrap{padding-block:18px 40px}
-}
+@media (min-width:900px){html:not(.phone) nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);bottom:auto;border-top:0;border-bottom:1px solid var(--line);justify-content:flex-start;gap:4px;padding:0 max(16px,calc((100vw - 1100px)/2 + 16px))}
+html:not(.phone) nav.tabs button{flex:0 0 auto;flex-direction:row;height:48px;gap:8px;font-size:14.5px;padding:0 14px;border-bottom:2px solid transparent}
+html:not(.phone) nav.tabs button b{font-size:17px}
+html:not(.phone) nav.tabs button[aria-current="page"]{border-bottom-color:var(--accent)}
+html:not(.phone) .wrap{padding-block:18px 40px}}
 
 /* generic */
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
@@ -82,23 +83,25 @@ td.n,th.n{text-align:right}
 .stack{display:flex;flex-direction:column;gap:14px}
 
 /* calendar */
-.calbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.calbar{display:grid;grid-template-columns:auto minmax(0,.8fr) minmax(0,1.5fr) minmax(0,1fr);gap:6px;margin-bottom:8px;max-width:620px;margin-inline:auto}
+.calbar select,.calbar .btn{width:100%;min-width:0;height:42px;font-size:15px;justify-content:center}
+.calbar .btn{padding:0 14px;font-weight:600}
+.filtrobar{max-width:620px;margin:0 auto 8px}
+.filtrobar select{width:100%;height:40px}
 .months{display:flex;gap:4px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px;scrollbar-width:thin}
 .months button{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 10px;font-size:13.5px;flex:none;color:var(--ink-2)}
 .months button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg);font-weight:600}
 .months button:disabled{opacity:.35}
-.monthhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.calcard{padding:12px}
+.monthhead{display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px;margin-bottom:10px}
 .monthhead h2{font-size:30px;text-transform:uppercase;letter-spacing:.03em;font-weight:700}
-.monthhead h2 small{font-size:22px;color:var(--muted);font-weight:500}
-.yearstrip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px}
-.yearstrip div{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:8px 10px;min-width:0}
-.yearstrip b{display:block;font-family:var(--f-display);font-size:24px;font-weight:600;line-height:1.1}
-.yearstrip span{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
-@media (max-width:560px){.yearstrip{grid-template-columns:repeat(2,minmax(0,1fr))}.brand h1{font-size:22px}.brand span{display:none}}
+.monthhead h2 small{font-size:24px;color:var(--muted);font-weight:500}
+.msum{font-size:13px;color:var(--muted)}
 .grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
-.wd{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);text-align:center;font-weight:600;padding:2px 0}
-.day{position:relative;min-height:78px;border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:5px;text-align:left;display:flex;flex-direction:column;gap:3px;min-width:0;overflow:hidden}
-.day.coded{background:color-mix(in srgb,var(--c) 13%,var(--surface));border-color:color-mix(in srgb,var(--c) 35%,var(--line))}
+.wd{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);text-align:center;font-weight:700;padding:2px 0}
+.wd.sun{color:var(--bad)}
+.day{position:relative;min-height:84px;border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:5px;text-align:left;display:flex;flex-direction:column;gap:2px;min-width:0;overflow:hidden}
+.day.coded{background:linear-gradient(135deg,color-mix(in srgb,var(--c) 13%,var(--surface)) 0 55%,color-mix(in srgb,var(--c2,var(--c)) 13%,var(--surface)) 55% 100%);border-color:color-mix(in srgb,var(--c) 35%,var(--line))}
 .day.auto{background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--c) 9%,var(--surface)) 0 6px,var(--surface) 6px 12px)}
 .day.out{opacity:.35;cursor:default;background:transparent;border-style:dashed}
 .day.pad{visibility:hidden}
@@ -106,27 +109,50 @@ td.n,th.n{text-align:right}
 .day .num{font-family:var(--f-display);font-size:19px;font-weight:600;line-height:1}
 .day.sun .num{color:var(--bad)}
 .day.today{box-shadow:inset 0 0 0 2px var(--today)}
-.day .code{font-size:11.5px;font-weight:600;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:4px}
-.day .det{font-size:11px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.day .tags{display:flex;gap:3px;flex-wrap:wrap;margin-top:auto}
+.day .code{font-family:var(--f-display);font-stretch:condensed;font-size:14px;font-weight:600;line-height:1.05;hyphens:auto;-webkit-hyphens:auto}
+.day .det{font-size:11px;line-height:1.15;color:var(--ink-2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.day .tags{display:flex;gap:2px;flex-wrap:wrap;margin-top:auto}
 .tag{font-size:10px;font-weight:600;padding:1px 5px;border-radius:4px;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-2);line-height:1.3}
 .tag.pm{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .tag.ot{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,var(--line))}
+.tag.fx{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}
 @media (max-width:560px){
-  .grid{gap:3px}
-  .day{min-height:64px;padding:4px 3px}
-  .day .det{display:none}
-  .day .code{font-size:10px}
-  .day .num{font-size:16px}
-  .tag{font-size:9px;padding:0 3px}
+  .calbar{grid-template-columns:auto minmax(0,1fr) minmax(0,1.3fr) minmax(0,.95fr);gap:5px}
+  .calbar select,.calbar .btn{font-size:13.5px;height:40px;padding-inline:5px}
+  .calbar .btn{padding-inline:10px}
+  .months button{padding:5px 9px;font-size:13px}
+  .calcard{margin-inline:-14px;border-radius:0;border-left:0;border-right:0;padding:10px 2px}
+  .monthhead h2{font-size:24px}
+  .monthhead h2 small{font-size:20px}
+  .msum{font-size:12px}
+  .grid{gap:2px}
+  .day{min-height:78px;padding:3px 2px;border-radius:6px}
+  .day .num{font-size:15px}
+  .day .code{font-size:11px;letter-spacing:-.1px;line-height:1.05}
+  .day .det{font-size:8.5px;line-height:1.1;letter-spacing:-.1px}
+  .tag{font-size:8.5px;padding:0 2px;border-radius:3px}
+  .card{padding:12px}
 }
 .legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+body.calmode .wrap{padding-bottom:calc(var(--nav-h) + 4px + env(safe-area-inset-bottom,0px))}
+@media (min-width:900px){html:not(.phone) body.calmode .wrap{padding-bottom:12px}}
+body.calmode .calcard{padding-bottom:6px;margin-bottom:0}
+body.calmode .months{margin-bottom:6px}
+body.calmode .filtrobar{margin-bottom:6px}
+body.calmode .monthhead{margin-bottom:6px}
+body.calmode .wd{height:20px;line-height:16px;padding:2px 0}
+.grid.compact .day .det{display:none}
+.grid.compact .day .num{font-size:14px}
+.grid.compact .day{padding-top:2px;padding-bottom:2px}
 
 /* sheet */
-.scrim{position:fixed;inset:0;background:rgb(10 16 22 / .45);z-index:40;display:flex;align-items:flex-end;justify-content:center}
-.sheet{background:var(--surface);width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px;border:1px solid var(--line)}
+.scrim{position:fixed;left:0;top:0;width:100%;height:var(--appvh,100vh);background:rgb(10 16 22 / .45);z-index:40;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--surface);width:100%;max-width:560px;max-height:calc(var(--appvh,100vh) * .92);overflow:auto;border-radius:16px 16px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px;border:1px solid var(--line)}
 @media (min-width:700px){.scrim{align-items:center}.sheet{border-radius:14px}}
-.sheet h3{font-size:24px;text-transform:capitalize}
+.sheet h3{font-size:24px;text-transform:capitalize;min-width:0}
+.sheet>.row:first-child{flex-wrap:nowrap}
+@media (max-width:560px){.sheet h3{font-size:20px}}
+html.phone .sheet h3{font-size:20px}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:6px 11px;font-size:13.5px;display:inline-flex;align-items:center;gap:6px}
 .chip[aria-pressed="true"]{background:color-mix(in srgb,var(--c,var(--ink)) 20%,var(--surface));border-color:var(--c,var(--ink));font-weight:600}
@@ -147,8 +173,13 @@ td.n,th.n{text-align:right}
 .tile span{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
 .tile small{display:block;font-size:12.5px;color:var(--ink-2);margin-top:2px}
 .rgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-@media (max-width:820px){.rgrid{grid-template-columns:1fr}}
+@media (max-width:820px){.rgrid{grid-template-columns:minmax(0,1fr)}}
+.rgrid>*,.tiles>*{min-width:0}
+.hbar{grid-template-columns:minmax(70px,150px) minmax(0,1fr) auto}
 .card h2{font-size:21px;margin-bottom:10px;text-transform:uppercase;letter-spacing:.03em}
+.semlist{display:flex;flex-direction:column;gap:8px;margin-bottom:6px}
+.sem{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface-2)}
+.sem .kv{margin-top:6px;font-size:13.5px}
 .kv{display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-size:14px}
 .kv dt{color:var(--ink-2)} .kv dd{margin:0;font-weight:600;text-align:right}
 .chart{width:100%;height:auto;display:block}
@@ -179,6 +210,32 @@ td.n,th.n{text-align:right}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
 .empty{padding:30px 16px;text-align:center;color:var(--ink-2)}
 @media (prefers-reduced-motion:no-preference){.sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(12px);opacity:.6}}}
+
+/* PHONE-START */
+html.phone .calbar{grid-template-columns:auto minmax(0,1fr) minmax(0,1.3fr) minmax(0,.95fr);gap:5px}
+html.phone .calbar select,html.phone .calbar .btn{font-size:13.5px;height:40px;padding-inline:5px}
+html.phone .calbar .btn{padding-inline:10px}
+html.phone .months button{padding:5px 9px;font-size:13px}
+html.phone .calcard{margin-inline:-14px;border-radius:0;border-left:0;border-right:0;padding:10px 2px}
+html.phone .monthhead h2{font-size:24px}
+html.phone .monthhead h2 small{font-size:20px}
+html.phone .msum{font-size:12px}
+html.phone .grid{gap:2px}
+html.phone .day{min-height:78px;padding:3px 2px;border-radius:6px}
+html.phone .day .num{font-size:15px}
+html.phone .day .code{font-size:11px;letter-spacing:-.1px;line-height:1.05}
+html.phone .day .det{font-size:8.5px;line-height:1.1;letter-spacing:-.1px}
+html.phone .tag{font-size:8.5px;padding:0 2px;border-radius:3px}
+html.phone .card{padding:12px}
+html.phone .sheet h3{font-size:20px}
+html.phone .two{grid-template-columns:1fr}
+html.phone .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+html.phone .rgrid{grid-template-columns:minmax(0,1fr)}
+html.phone .set{grid-template-columns:1fr}
+html.phone .setnav{flex-direction:row;overflow-x:auto;position:static;padding-bottom:4px}
+html.phone .setnav button{flex:none;border:1px solid var(--line);background:var(--surface)}
+html.phone .setnav button[aria-current="true"]{background:var(--ink);color:var(--bg);box-shadow:none}
+/* PHONE-END */
 </style>
 
 <nav class="tabs" id="tabs">
@@ -187,10 +244,6 @@ td.n,th.n{text-align:right}
   <button data-tab="impostazioni"><b>⚙️</b>Impostazioni</button>
 </nav>
 <div class="wrap">
-  <header class="top">
-    <div class="brand"><h1>Registro presenze</h1><span id="brandSub">Denny · dal 25/09/2025</span></div>
-    <span class="sync" id="sync" title=""><i></i><span>Caricamento…</span></span>
-  </header>
   <main id="view"><div class="empty">Caricamento del registro…</div></main>
 </div>
 <div id="tip" hidden></div>
@@ -198,6 +251,16 @@ td.n,th.n{text-align:right}
 
 <script>
 "use strict";
+/* Riconosce il telefono anche se il browser mostra la pagina come sito desktop */
+(function(){
+  const sw=Math.min(screen.width,screen.height), coarse=matchMedia("(pointer:coarse)").matches;
+  if(coarse && sw<600){
+    document.documentElement.classList.add("phone");
+    const fit=()=>{ const z=innerWidth/screen.width, on=z>1.15; document.documentElement.style.zoom = on ? z.toFixed(3) : ""; document.documentElement.style.setProperty("--appvh", (on ? innerHeight/z : innerHeight)+"px"); };
+    fit(); addEventListener("resize",fit); addEventListener("orientationchange",()=>setTimeout(fit,300));
+  }
+})();
+if(!document.documentElement.classList.contains("phone")){ const setVh=()=>document.documentElement.style.setProperty("--appvh", innerHeight+"px"); setVh(); addEventListener("resize",setVh); }
 /* ============================ utilità ============================ */
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -229,7 +292,7 @@ const estraiMezzi = t => [...new Set((String(t||"").match(MEZZI_RE)||[]).map(x=>
 /* ============================ stato ============================ */
 let S = null;            // {config, anni:{[y]:{giorni}}, meta}
 let UI = { tab:"calendario", year:null, month:null, filtro:"", setSec:"codici",
-           rep:{tipo:"anno", anno:null, mese:null, da:"", a:""} };
+           rep:{tipo:"mese", anno:null, mese:null, da:"", a:""} };
 
 /* ============================ archiviazione ============================ */
 const LS_KEY = "registroPresenze.v1", LS_BAK = "registroPresenze.backupAuto";
@@ -331,11 +394,13 @@ const Store = {
     const txt = this.mode==="cloud"
       ? (st==="ok"?"Dati sincronizzati":st==="pending"?"Modifiche non sincronizzate":"Errore sincronizzazione")
       : (st==="err"?"Errore di salvataggio":"Salvato su questo dispositivo");
-    el.querySelector("span").textContent = txt;
+    const sh = this.mode==="cloud" ? (st==="ok"?"Sincronizzato":st==="pending"?"In attesa":"Errore") : (st==="err"?"Errore":"Salvato");
+    el.querySelector("span").innerHTML = `<i class="lg">${txt}</i><i class="sh">${sh}</i>`;
     el.title = msg || (this.mode==="cloud" ? "I dati sono salvati nel cloud e disponibili su tutti i tuoi dispositivi." : "I dati sono salvati solo in questo browser: esporta spesso un backup.");
   }
 };
 async function fetchSeed(){ try{ const r = await fetch("seed.json",{cache:"no-store"}); if(r.ok) return await r.json(); }catch(e){} return null; }
+let _migrato = false;
 function normalize(d){
   const c = d.config || {};
   c.dataInizio ||= "2025-09-25";
@@ -347,6 +412,23 @@ function normalize(d){
   c.anniArchiviati ||= [];
   const anni = d.anni || {};
   for(const y of Object.keys(anni)) anni[y].giorni ||= {};
+  c.migrazioni ||= [];
+  if(!c.migrazioni.includes("41bis-ordine-in-lavoro")){
+    // 30/09/2026: «41 bis» e «Ordine cattedrale» diventano attività del codice Lavoro
+    const map = {"41bis":"41 bis", "ordine_cattedrale":"ordine cattedrale"};
+    for(const y of Object.keys(anni)) for(const r of Object.values(anni[y].giorni)){
+      if(map[r.codice]){ if(!r.dettaglio) r.dettaglio = map[r.codice]; r.codice = "lavoro"; }
+    }
+    c.codici = c.codici.filter(x=>!map[x.id]);
+    c.migrazioni.push("41bis-ordine-in-lavoro");
+    _migrato = true;
+  }
+  if(!c.migrazioni.includes("permessi-mensili-4h")){
+    // 01/10/2026: i permessi sono 4 h al mese, non cumulabili
+    for(const p of Object.values(c.parametri)){ p.permessiMensiliOre = 4; delete p.permessiOre; }
+    c.migrazioni.push("permessi-mensili-4h");
+    _migrato = true;
+  }
   for(const y of Object.keys(c.parametri)) if(!anni[y]) anni[y]={giorni:{}};
   return { config:c, anni, meta: Object.assign({ultimaModifica:null, ultimaEsportazione:null}, d.meta||{}) };
 }
@@ -360,6 +442,8 @@ function isFestivo(ds){
   if(S.config.pasquetta && ds === addDays(easter(+ds.slice(0,4)),1)) return true;
   return false;
 }
+/** Tutti i codici registrati in una giornata (il primo è il principale). */
+const codesOf = r => r ? [r.codice, ...(r.codiciExtra||[])].filter(Boolean) : [];
 /** Codice effettivo: quello inserito; altrimenti festività/domenica automatiche. */
 function effCode(ds){
   const r = dayRec(ds);
@@ -391,14 +475,52 @@ function congedoLedger(){
     for(const ds of Object.keys(g).sort()){
       if(ds<start || !scala.has(g[ds].codice)) continue;
       const ks=Object.keys(b).sort(); let done=false;
-      for(const k of ks) if(b[k]>0){ b[k]--; done=true; break; }
+      const scelto=g[ds].congedoAnno; if(scelto){ b[scelto]=(b[scelto]||0)-1; done=true; }
+      if(!done) for(const k of ks) if(b[k]>0){ b[k]--; done=true; break; }
       if(!done){ const k=String(y); b[k]=(b[k]||0)-1; }
       points.push({date:ds, b:clone(b), kind:"uso"});
     }
   }
   return { points, yearStart,
     at(ds){ let r=null; for(const p of points){ if(p.date<=ds) r=p; else break; } return r?r.b:{}; },
+    beforeDay(ds){ let r=null; for(const p of points){ if(p.date<ds || (p.date===ds && p.kind!=="uso")) r=p; else break; } return r?r.b:{}; },
     afterDay(ds){ const p=points.filter(p=>p.date===ds&&p.kind==="uso"); return p.length?p[p.length-1].b:null; } };
+}
+/** Permessi: ore mensili (4 h salvo diversa impostazione), non cumulabili: il 1° del mese ripartono da capo. */
+const permOreMese = y => +(S.config.parametri[y]?.permessiMensiliOre ?? 4);
+function permessiMese(y,m){
+  const da=ymd(y,m,1), a=ymd(y,m,dim(y,m));
+  if(a < S.config.dataInizio) return {spettanti:0, usati:0, residui:0, persi:0};
+  const spettanti = permOreMese(y)*60;
+  let usati=0; for(const ds of dates(da,a)){ const r=dayRec(ds); if(r?.permessoMin) usati+=r.permessoMin; }
+  const residui = spettanti-usati, chiuso = a < todayStr();
+  return {spettanti, usati, residui, persi: chiuso ? Math.max(0,residui) : 0};
+}
+function permessiPeriodo(da,a){
+  const r={spettanti:0, usati:0, persi:0, mesi:0};
+  let [y,m]=parts(da); const [y2,m2]=parts(a);
+  const oggi=todayStr();
+  while(y<y2 || (y===y2 && m<=m2)){ if(ymd(y,m,1)>oggi) break; const p=permessiMese(y,m); if(p.spettanti){ r.spettanti+=p.spettanti; r.usati+=p.usati; r.persi+=p.persi; r.mesi++; } m++; if(m>12){m=1;y++;} }
+  return r;
+}
+/** Straordinario: si accumula per semestre (gen–giu, lug–dic) e si azzera il 1° gennaio e il 1° luglio.
+ *  La flessibilità si usa come un permesso ma scala dal saldo straordinario del semestre. */
+const semKey = ds => ds.slice(0,4)+(+ds.slice(5,7)<=6?"-1":"-2");
+const semRange = k => { const y=+k.slice(0,4), h=+k.slice(5); return h===1?[ymd(y,1,1),ymd(y,6,30)]:[ymd(y,7,1),ymd(y,12,31)]; };
+const semNome = k => (k.endsWith("-1")?"Gennaio–giugno ":"Luglio–dicembre ")+k.slice(0,4);
+function semestre(k){
+  let [da,a]=semRange(k); if(da<S.config.dataInizio) da=S.config.dataInizio;
+  let maturato=0, flex=0;
+  if(a>=da) for(const ds of dates(da,a)){ const r=dayRec(ds); if(!r) continue; maturato+=r.straordinarioMin||0; flex+=r.flessibilitaMin||0; }
+  const saldo=maturato-flex, chiuso=semRange(k)[1]<todayStr();
+  return {k, nome:semNome(k), maturato, flex, saldo, chiuso, azzerato: chiuso?Math.max(0,saldo):0};
+}
+function semestriTra(da,a){ const out=[]; let k=semKey(da<S.config.dataInizio?S.config.dataInizio:da); const end=semKey(a); while(k<=end){ out.push(k); const y=+k.slice(0,4); k = k.endsWith("-1") ? y+"-2" : (y+1)+"-1"; } return out; }
+let _ledCache=null, _ledAt=null;
+function congYearOf(ds){
+  if(_ledAt!==S.meta.ultimaModifica || !_ledCache){ _ledCache=congedoLedger(); _ledAt=S.meta.ultimaModifica; }
+  const before=_ledCache.beforeDay(ds), after=_ledCache.afterDay(ds); if(!after) return "";
+  return Object.keys(after).find(k=>(after[k]||0)<(before[k]||0)) || "";
 }
 const tot = b => Object.values(b||{}).reduce((a,v)=>a+v,0);
 const bucketsTxt = b => { const e=Object.entries(b||{}).filter(([k,v])=>v!==0).sort(); return e.length? e.map(([k,v])=>`${k}: ${v}`).join(" · ") : "nessun residuo"; };
@@ -422,28 +544,30 @@ function stats(da, a){
   const oggi = todayStr(), start=S.config.dataInizio;
   if(da<start) da=start;
   const r = { da, a, perCodice:{}, lavorate:0, trasferte:0, congedo:0, malattia:0, riposi:0, festivi:0, turniPom:0, turniPomLav:0,
-              straordMin:0, straordGiorni:[], permessoMin:0, permessoGiorni:[], vuoti:[], mesi:{}, mezzi:{}, registrate:0 };
+              straordMin:0, straordGiorni:[], flexMin:0, flexGiorni:[], permessoMin:0, permessoGiorni:[], vuoti:[], mesi:{}, mezzi:{}, registrate:0 };
   if(a<da) return r;
   for(const ds of dates(da,a)){
     const rec = dayRec(ds) || {};
     const ec = effCode(ds);
     const mk = ds.slice(0,7);
-    const M = r.mesi[mk] ||= {lavorate:0,trasferte:0,congedo:0,malattia:0,straordMin:0,turniPom:0,permessoMin:0};
+    const M = r.mesi[mk] ||= {lavorate:0,trasferte:0,congedo:0,malattia:0,straordMin:0,flexMin:0,turniPom:0,permessoMin:0};
     if(ec && ec.auto && ds>oggi) { continue; }
     if(rec.codice) r.registrate++;
     if(ec){
-      const c = codeById(ec.id);
-      r.perCodice[ec.id]=(r.perCodice[ec.id]||0)+1;
-      if(c?.lavorativo){ r.lavorate++; M.lavorate++; }
-      if(c?.categoria==="Trasferta"){ r.trasferte++; M.trasferte++; }
-      if(c?.scalaCongedo){ r.congedo++; M.congedo++; }
-      if(c?.categoria==="Malattia"){ r.malattia++; M.malattia++; }
-      if(c?.categoria==="Riposo") r.riposi++;
-      if(c?.categoria==="Festività") r.festivi++;
-      if(rec.turno && c?.lavorativo) r.turniPomLav++;
-    } else if(ds<=oggi && !rec.codice){ r.vuoti.push(ds); }
+      const ids = ec.auto ? [ec.id] : codesOf(rec), cs = ids.map(codeById).filter(Boolean);
+      ids.forEach(id=>{ r.perCodice[id]=(r.perCodice[id]||0)+1; });
+      const any = f => cs.some(f);
+      if(any(c=>c.lavorativo)){ r.lavorate++; M.lavorate++; }
+      if(any(c=>c.categoria==="Trasferta")){ r.trasferte++; M.trasferte++; }
+      if(any(c=>c.scalaCongedo)){ r.congedo++; M.congedo++; }
+      if(any(c=>c.categoria==="Malattia")){ r.malattia++; M.malattia++; }
+      if(any(c=>c.categoria==="Riposo")) r.riposi++;
+      if(any(c=>c.categoria==="Festività")) r.festivi++;
+      if(rec.turno && any(c=>c.lavorativo)) r.turniPomLav++;
+    } else if(ds<oggi && !rec.codice){ r.vuoti.push(ds); }
     if(rec.turno && (ds<=oggi || rec.codice)){ r.turniPom++; M.turniPom++; }
     if(rec.straordinarioMin){ r.straordMin+=rec.straordinarioMin; M.straordMin+=rec.straordinarioMin; r.straordGiorni.push(ds); }
+    if(rec.flessibilitaMin){ r.flexMin+=rec.flessibilitaMin; M.flexMin+=rec.flessibilitaMin; r.flexGiorni.push(ds); }
     if(rec.permessoMin){ r.permessoMin+=rec.permessoMin; M.permessoMin+=rec.permessoMin; r.permessoGiorni.push(ds); }
     for(const m of rec.mezzi||[]) r.mezzi[m]=(r.mezzi[m]||0)+1;
   }
@@ -460,11 +584,11 @@ function applyTheme(){
   if(t==="light"||t==="dark") document.documentElement.dataset.userTheme="1";
 }
 function render(){
+  document.body.classList.toggle("calmode", UI.tab==="calendario");
   document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-current", b.dataset.tab===UI.tab?"page":"false"));
   if(!S){ $("#view").innerHTML = emptyState(); return; }
   applyTheme();
-  $("#brandSub").textContent = `Denny · dal ${fmtDate(S.config.dataInizio)}`;
-  if(UI.tab==="calendario") renderCal();
+    if(UI.tab==="calendario") renderCal();
   else if(UI.tab==="report") renderReport();
   else renderSettings();
 }
@@ -499,41 +623,33 @@ function renderCal(){
   const firstM = (y===+start.slice(0,4)) ? +start.slice(5,7) : 1;
   if(UI.month==null || UI.month<firstM) UI.month = (y===+oggi.slice(0,4)) ? +oggi.slice(5,7) : firstM;
   const m = UI.month;
-  const L = congedoLedger();
-  const ys_ = stats(ymd(y,1,1), ymd(y,12,31));
-  const resNow = L.at(oggi < ymd(y,12,31) ? oggi : ymd(y,12,31));
-  const permDisp = (+(S.config.parametri[y]?.permessiOre||0))*60;
   const filtri = S.config.codici.filter(c=>c.attivo || usage()[c.id]);
   const cats = [...new Set(S.config.codici.map(c=>c.categoria))];
-
-  let h = `<div class="yearstrip">
-    <div><span>Giornate lavorate ${y}</span><b>${ys_.lavorate}</b></div>
-    <div><span>Congedo residuo</span><b>${tot(resNow)}</b></div>
-    <div><span>Straordinari ${y}</span><b>${fmtHM(ys_.straordMin)}</b></div>
-    <div><span>Permessi residui</span><b>${fmtHM(permDisp-ys_.permessoMin)}</b></div>
-  </div>
+  let h = `
   <div class="calbar">
-    <select id="yearSel" aria-label="Anno">${ys.map(v=>`<option ${v===y?"selected":""}>${v}</option>`).join("")}</select>
-    <button class="btn" id="prevM" aria-label="Mese precedente">‹</button>
-    <button class="btn" id="nextM" aria-label="Mese successivo">›</button>
     <button class="btn" id="todayB">Oggi</button>
-    <input type="date" id="goDate" aria-label="Vai a una data" min="${start}">
-    <select id="filtro" aria-label="Filtro" class="grow" style="max-width:220px">
-      <option value="">Tutti i giorni</option>
+    <select id="daySel" aria-label="Giorno"><option value="">Giorno</option>${Array.from({length:dim(y,m)},(_,i)=>{const ds=ymd(y,m,i+1);return `<option value="${ds}" ${ds<start?"disabled":""}>${i+1}</option>`}).join("")}</select>
+    <select id="monSel" aria-label="Mese"><option value="" selected>Mese</option>${MESI.map((n,i)=>`<option value="${i+1}" ${i+1<firstM?"disabled":""}>${n}</option>`).join("")}</select>
+    <select id="yearSel" aria-label="Anno"><option value="" selected>Anno</option>${ys.map(v=>`<option value="${v}">${v}</option>`).join("")}</select>
+  </div>
+  <div class="filtrobar"><select id="filtro" aria-label="Mostra">
+      <option value="">Mostra tutti i giorni</option>
       <optgroup label="Codice">${filtri.map(c=>`<option value="c:${esc(c.id)}" ${UI.filtro==="c:"+c.id?"selected":""}>${esc(c.nome)}</option>`).join("")}</optgroup>
       <optgroup label="Categoria">${cats.map(c=>`<option value="k:${esc(c)}" ${UI.filtro==="k:"+c?"selected":""}>${esc(c)}</option>`).join("")}</optgroup>
-      <optgroup label="Altro"><option value="x:turno" ${UI.filtro==="x:turno"?"selected":""}>Turno pomeridiano</option><option value="x:straord" ${UI.filtro==="x:straord"?"selected":""}>Con straordinario</option><option value="x:vuoti" ${UI.filtro==="x:vuoti"?"selected":""}>Senza registrazione</option></optgroup>
-    </select>
-  </div>
+      <optgroup label="Altro"><option value="x:turno" ${UI.filtro==="x:turno"?"selected":""}>Turno pomeridiano</option><option value="x:straord" ${UI.filtro==="x:straord"?"selected":""}>Con straordinario</option><option value="x:perm" ${UI.filtro==="x:perm"?"selected":""}>Con permesso</option><option value="x:flex" ${UI.filtro==="x:flex"?"selected":""}>Con flessibilità</option><option value="x:vuoti" ${UI.filtro==="x:vuoti"?"selected":""}>Senza registrazione</option></optgroup>
+  </select></div>
   <div class="months" role="group" aria-label="Mesi">${MESI.map((n,i)=>`<button data-m="${i+1}" aria-pressed="${i+1===m}" ${i+1<firstM?"disabled":""}>${MESI3[i]}</button>`).join("")}</div>`;
 
   const ms = stats(ymd(y,m,1), ymd(y,m,dim(y,m)));
-  h += `<div class="card" style="padding:12px">
+  const pm = permessiMese(y,m);
+  const permTxt = ymd(y,m,dim(y,m)) < oggi ? (pm.usati?` · permessi usati ${fmtHM(pm.usati)}`:"") : ` · permessi disponibili ${fmtHM(pm.residui)}`;
+  h += `<div class="card calcard">
     <div class="monthhead"><h2>${MESI[m-1]} <small>${y}</small></h2>
-      <div class="small muted" style="text-align:right">${ms.lavorate} lavorate · ${ms.congedo} congedo${ms.straordMin?` · straord. ${fmtHM(ms.straordMin)}`:""}${ms.turniPom?` · ${ms.turniPom} pom.`:""}</div></div>`;
+      <div class="msum">${ms.lavorate} lavorate · ${ms.congedo} congedo${ms.straordMin?` · straordinari ${fmtHM(ms.straordMin)}`:""}${permTxt}</div>
+      <div class="msum">Saldo straordinario ${semNome(semKey(ymd(y,m,1))).toLowerCase()}: <b>${fmtHM(semestre(semKey(ymd(y,m,1))).saldo)}</b></div></div>`;
   const fd = S.config.preferenze.primoGiorno===0 ? 0 : 1;
   const order = fd===1 ? [1,2,3,4,5,6,0] : [0,1,2,3,4,5,6];
-  h += `<div class="grid">${order.map(i=>`<div class="wd">${WD1[i]}</div>`).join("")}`;
+  h += `<div class="grid">${order.map(i=>`<div class="wd${i===0?" sun":""}">${WD1[i]}</div>`).join("")}`;
   const lead = (dow(ymd(y,m,1)) - fd + 7) % 7;
   for(let i=0;i<lead;i++) h += `<div class="day pad" aria-hidden="true"></div>`;
   for(let d=1; d<=dim(y,m); d++){
@@ -546,37 +662,70 @@ function renderCal(){
     if(rec.turno) tags.push(`<span class="tag pm" title="Turno pomeridiano">POM</span>`);
     if(rec.straordinarioMin) tags.push(`<span class="tag ot" title="Straordinario">+${fmtHM(rec.straordinarioMin)}</span>`);
     if(rec.permessoMin) tags.push(`<span class="tag" title="Permesso">P ${fmtHM(rec.permessoMin)}</span>`);
+    if(rec.flessibilitaMin) tags.push(`<span class="tag fx" title="Flessibilità">F ${fmtHM(rec.flessibilitaMin)}</span>`);
     if(rec.note) tags.push(`<span class="tag" title="${esc(rec.note)}">✎</span>`);
-    const label = `${fmtDate(ds,true)}${c?", "+c.nome:""}${rec.turno?", turno pomeridiano":""}`;
-    h += `<button class="${cls.join(" ")}" ${out?"disabled":""} data-day="${ds}" style="--c:${c?esc(c.colore):"var(--muted)"}" aria-label="${esc(label)}">
+    const extra = (!ec?.auto && (rec.codiciExtra||[]).length) ? (rec.codiciExtra||[]).map(id=>codeById(id)).filter(Boolean) : [];
+    const label = `${fmtDate(ds,true)}${c?", "+[c,...extra].map(x=>x.nome).join(" e "):""}${rec.turno?", turno pomeridiano":""}`;
+    h += `<button class="${cls.join(" ")}" ${out?"disabled":""} data-day="${ds}" style="--c:${c?esc(c.colore):"var(--muted)"}${extra.length?`;--c2:${esc(extra[0].colore)}`:""}" aria-label="${esc(label)}">
       <span class="num">${d}</span>
-      ${c?`<span class="code">${esc(c.nome)}</span>`:""}
-      ${rec.dettaglio && c && c.id!=="congedo"?`<span class="det">${esc(rec.dettaglio)}</span>`:""}
+      ${c?(ec.auto?[c]:codesOf(rec).map(codeById).filter(Boolean)).map(x=>`<span class="code">${esc(x.nome)}</span>`).join(""):""}
+      ${c && c.scalaCongedo && !ec.auto ? `<span class="det">${esc(rec.congedoAnno || congYearOf(ds) || "")}</span>` : rec.dettaglio && c && !codesOf(rec).some(id=>codeById(id)?.nome.toLowerCase()===rec.dettaglio.trim().toLowerCase())?`<span class="det">${esc(rec.dettaglio)}</span>`:""}
       ${tags.length?`<span class="tags">${tags.join("")}</span>`:""}
     </button>`;
   }
   h += `</div>`;
-  const used = new Set(); for(let d=1; d<=dim(y,m); d++){ const ec=effCode(ymd(y,m,d)); if(ec) used.add(ec.id); }
-  h += `<div class="legend">${[...used].map(id=>{const c=codeById(id); return c?`<span class="pill" style="--c:${esc(c.colore)}"><span class="dot"></span>${esc(c.nome)}</span>`:""}).join("")}
-    <span class="pill"><span class="tag pm" style="margin:0">POM</span>turno pomeridiano</span>
-    <span class="pill" style="border-style:dashed">tratteggio = automatico</span></div></div>`;
+  h += `</div>`;
   $("#view").innerHTML = h;
 
-  $("#yearSel").onchange = e=>{ UI.year=+e.target.value; UI.month=null; renderCal(); };
-  $("#prevM").onclick = ()=>stepMonth(-1);
-  $("#nextM").onclick = ()=>stepMonth(1);
+  $("#yearSel").onchange = e=>{ if(!e.target.value) return; UI.year=+e.target.value; UI.month=null; renderCal(); };
+  $("#monSel").onchange = e=>{ if(!e.target.value) return; UI.month=+e.target.value; renderCal(); };
+  $("#daySel").onchange = e=>{ const v=e.target.value; e.target.value=""; if(v) openDay(v); };
   $("#todayB").onclick = ()=>{ const t=todayStr(); UI.year=+t.slice(0,4); UI.month=+t.slice(5,7); renderCal(); };
-  $("#goDate").onchange = e=>{ const v=e.target.value; if(!v) return; if(!yearsList(false).includes(+v.slice(0,4))){ toast("Anno non presente: aggiungilo da Impostazioni → Anni."); return; } UI.year=+v.slice(0,4); UI.month=+v.slice(5,7); renderCal(); if(v>=S.config.dataInizio) openDay(v); };
+  { const g=$(".grid"); let x0=null,y0=null;
+    g.addEventListener("touchstart",e=>{ x0=e.touches[0].clientX; y0=e.touches[0].clientY; },{passive:true});
+    g.addEventListener("touchend",e=>{ if(x0==null) return; const dx=e.changedTouches[0].clientX-x0, dy=e.changedTouches[0].clientY-y0; x0=null; if(Math.abs(dx)>60 && Math.abs(dx)>Math.abs(dy)*1.5) stepMonth(dx<0?1:-1); },{passive:true}); }
   $("#filtro").onchange = e=>{ UI.filtro=e.target.value; renderCal(); };
   document.querySelectorAll(".months button").forEach(b=>b.onclick=()=>{ UI.month=+b.dataset.m; renderCal(); });
+  { const bar=$(".months"), cur=bar.querySelector('[aria-pressed="true"]'); if(cur) bar.scrollLeft = cur.offsetLeft - bar.offsetLeft - (bar.clientWidth - cur.offsetWidth)/2; }
   document.querySelectorAll(".day[data-day]").forEach(b=>b.onclick=()=>openDay(b.dataset.day));
+  sizeGrid();
+  fitCodes();
 }
+/** Dimensiona le righe del calendario perché tutto il mese stia nello schermo, senza scorrere. */
+function sizeGrid(){
+  const g=$(".grid"); if(!g) return;
+  const top = el=>{ let t=0; while(el){ t+=el.offsetTop; el=el.offsetParent; } return t; };
+  const cs = el=>getComputedStyle(el);
+  const vh = parseFloat(cs(document.documentElement).getPropertyValue("--appvh")) || innerHeight;
+  const wrap=$(".wrap"), card=g.closest(".calcard");
+  const below = parseFloat(cs(wrap).paddingBottom) + (card?parseFloat(cs(card).paddingBottom)+1:0) + 2;
+  const weeks = Math.ceil(g.querySelectorAll(".day").length/7);
+  const wdH = 20, gap = parseFloat(cs(g).rowGap)||2;
+  const avail = vh - top(g) - below - wdH - gap*weeks;
+  const rowH = Math.max(44, Math.floor(avail/weeks));
+  g.style.gridTemplateRows = `${wdH}px repeat(${weeks}, ${rowH}px)`;
+  g.classList.toggle("compact", rowH<62);
+  g.querySelectorAll(".day").forEach(d=>{ d.style.minHeight="0"; d.style.height=rowH+"px"; });
+}
+/** Adatta il nome del codice alla cella: rimpicciolisce il testo finché ogni parola sta nella casella. */
+function fitCodes(){
+  document.querySelectorAll(".day .code").forEach(el=>{
+    el.style.fontSize=""; el.style.overflowWrap="";
+    let fs=parseFloat(getComputedStyle(el).fontSize);
+    while(el.scrollWidth>el.clientWidth+0.5 && fs>7.5){ fs-=0.5; el.style.fontSize=fs+"px"; }
+    if(el.scrollWidth>el.clientWidth+0.5) el.style.overflowWrap="anywhere";
+  });
+}
+addEventListener("resize",()=>{ if(UI.tab==="calendario" && S){ sizeGrid(); fitCodes(); } });
 function matchFiltro(ds, rec, ec, c){
   const f=UI.filtro, v=f.slice(2);
-  if(f.startsWith("c:")) return ec && ec.id===v;
-  if(f.startsWith("k:")) return c && c.categoria===v;
+  const ids = ec ? (ec.auto ? [ec.id] : codesOf(rec)) : [];
+  if(f.startsWith("c:")) return ids.includes(v);
+  if(f.startsWith("k:")) return ids.some(id=>codeById(id)?.categoria===v);
   if(f==="x:turno") return !!rec.turno;
   if(f==="x:straord") return !!rec.straordinarioMin;
+  if(f==="x:perm") return !!rec.permessoMin;
+  if(f==="x:flex") return !!rec.flessibilitaMin;
   if(f==="x:vuoti") return !ec && ds<=todayStr();
   return true;
 }
@@ -587,75 +736,114 @@ function stepMonth(n){
   UI.year=y; UI.month=m; renderCal();
 }
 let _usage=null, _usageAt=null;
-function usage(){ if(_usageAt===S.meta.ultimaModifica && _usage) return _usage; const u={}; for(const y of Object.keys(S.anni)) for(const r of Object.values(S.anni[y].giorni)) if(r.codice) u[r.codice]=(u[r.codice]||0)+1; _usage=u; _usageAt=S.meta.ultimaModifica; return u; }
+function usage(){ if(_usageAt===S.meta.ultimaModifica && _usage) return _usage; const u={}; for(const y of Object.keys(S.anni)) for(const r of Object.values(S.anni[y].giorni)) codesOf(r).forEach(id=>{ u[id]=(u[id]||0)+1; }); _usage=u; _usageAt=S.meta.ultimaModifica; return u; }
 
 /* ---------- editor giornata ---------- */
 function openDay(ds){
   const rec = clone(dayRec(ds)||{}), ec = effCode(ds);
   const L = congedoLedger();
-  const active = S.config.codici.filter(c=>c.attivo || c.id===rec.codice);
+  const active = S.config.codici.filter(c=>c.attivo || codesOf(rec).includes(c.id));
   const groups = {}; active.forEach(c=>(groups[c.categoria] ||= []).push(c));
-  let sel = rec.codice || "";
+  let selArr = codesOf(rec), sel = selArr[0] || "";
   const oH=Math.floor((rec.straordinarioMin||0)/60), oM=(rec.straordinarioMin||0)%60;
   const pH=Math.floor((rec.permessoMin||0)/60), pM=(rec.permessoMin||0)%60;
-  const f1=(rec.straordinarioFasce||[])[0]||{}, pf=(rec.permessoFascia)||{};
+  const f1=(rec.straordinarioFasce||[])[0]||{}, pf=(rec.permessoFascia)||{}, ff=(rec.flessibilitaFascia)||{};
+  const xH=Math.floor((rec.flessibilitaMin||0)/60), xM=(rec.flessibilitaMin||0)%60;
   $("#modal").innerHTML = `<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="shT">
     <div class="row" style="justify-content:space-between"><h3 id="shT">${esc(fmtDate(ds,true))}</h3><button class="btn ghost" id="shX" aria-label="Chiudi">✕</button></div>
     ${ec&&ec.auto?`<p class="notice small" style="margin:0">Oggi risulta <b>${esc(codeById(ec.id).nome)}</b> in automatico. Scegli un codice per registrarlo diversamente.</p>`:""}
     <div class="stack" style="gap:8px"><span class="lbl">Stato della giornata</span>
-      <div class="chips" id="chips"><button class="chip" data-c="" aria-pressed="${sel===""}">Nessuno</button>
-      ${Object.entries(groups).map(([k,cs])=>cs.map(c=>`<button class="chip" data-c="${esc(c.id)}" style="--c:${esc(c.colore)}" aria-pressed="${sel===c.id}"><span class="dot"></span>${esc(c.nome)}</button>`).join("")).join("")}</div></div>
+      <span class="small muted">Puoi sceglierne più di uno (es. Corso e Trasferta). Il congedo si sceglie da solo.</span>
+      <div class="chips" id="chips"><button class="chip" data-c="" aria-pressed="${!selArr.length}">Nessuno</button>
+      ${Object.entries(groups).map(([k,cs])=>cs.map(c=>`<button class="chip" data-c="${esc(c.id)}" style="--c:${esc(c.colore)}" aria-pressed="${selArr.includes(c.id)}"><span class="dot"></span>${esc(c.nome)}</button>`).join("")).join("")}</div></div>
+    <div id="congBox" class="stack" style="gap:8px" hidden><span class="lbl">Scala il giorno dal congedo dell'anno</span><div class="chips" id="congYears"></div></div>
+    <div id="altroBox" class="stack" style="gap:14px">
     <label class="switch"><input type="checkbox" id="fTurno" ${rec.turno?"checked":""}> Turno pomeridiano</label>
-    <label class="f">Attività (mezzo e intervento)<input type="text" id="fDet" value="${esc(rec.dettaglio||"")}" placeholder="es. st4 c5"></label>
+    <label class="f" id="detBox">Attività svolta (mezzo e intervento)<input type="text" id="fDet" value="${esc(rec.dettaglio||"")}" placeholder="es. st4 c5"></label>
     <div class="two">
       <div class="stack" style="gap:6px"><span class="lbl">Straordinario</span>
         <div class="hm"><input type="number" id="oH" min="0" max="24" value="${oH||""}" placeholder="0" aria-label="Ore straordinario"> h <input type="number" id="oM" min="0" max="59" value="${oM||""}" placeholder="0" aria-label="Minuti straordinario"> min</div>
         <div class="hm small muted">dalle <input type="time" id="oDa" value="${esc(f1.dalle||"")}"> alle <input type="time" id="oA" value="${esc(f1.alle||"")}"></div></div>
       <div class="stack" style="gap:6px"><span class="lbl">Permesso</span>
+        <span class="small muted" id="permInfo"></span>
         <div class="hm"><input type="number" id="pH" min="0" max="24" value="${pH||""}" placeholder="0" aria-label="Ore permesso"> h <input type="number" id="pM" min="0" max="59" value="${pM||""}" placeholder="0" aria-label="Minuti permesso"> min</div>
         <div class="hm small muted">dalle <input type="time" id="pDa" value="${esc(pf.dalle||"")}"> alle <input type="time" id="pA" value="${esc(pf.alle||"")}"></div></div>
+      <div class="stack" style="gap:6px"><span class="lbl">Flessibilità</span>
+        <span class="small muted" id="flexInfo"></span>
+        <div class="hm"><input type="number" id="xH" min="0" max="24" value="${xH||""}" placeholder="0" aria-label="Ore flessibilità"> h <input type="number" id="xM" min="0" max="59" value="${xM||""}" placeholder="0" aria-label="Minuti flessibilità"> min</div>
+        <div class="hm small muted">dalle <input type="time" id="xDa" value="${esc(ff.dalle||"")}"> alle <input type="time" id="xA" value="${esc(ff.alle||"")}"></div></div>
     </div>
     <label class="f">Note<textarea id="fNote" placeholder="Aggiungi una nota">${esc(rec.note||"")}</textarea></label>
+    </div>
     <div id="congInfo"></div>
     ${rec.origine?`<p class="small muted" style="margin:0">Origine: ${esc(rec.origine)}${rec.modificatoIl?` · modificato il ${esc(fmtDate(rec.modificatoIl.slice(0,10)))}`:""}</p>`:""}
     <div class="row" style="justify-content:space-between">
       <button class="btn danger" id="shClear" ${dayRec(ds)?"":"disabled"}>Svuota giornata</button>
       <div class="row"><button class="btn" id="shCancel">Annulla</button><button class="btn primary" id="shSave">Salva</button></div>
     </div></div></div>`;
+  // anni selezionabili: quello della giornata e i 2 precedenti
+  const dy=+ds.slice(0,4), anniCong=[dy-2,dy-1,dy].map(String);
+  const prima = clone(L.beforeDay(ds));
+  const fifo = ()=>{ const k=Object.keys(prima).sort().find(k=>prima[k]>0); return k && anniCong.includes(k) ? k : (k||String(dy)); };
+  let congAnno = rec.congedoAnno || fifo();
+  const drawYears = ()=>{ $("#congYears").innerHTML = anniCong.map(k=>`<button class="chip" data-y="${k}" aria-pressed="${congAnno===k}">${k} <span class="muted">· ${prima[k]||0} ${(prima[k]||0)===1?"giorno":"giorni"}</span></button>`).join(""); };
+  const congMode = ()=>{ const isC = !!codeById(sel)?.scalaCongedo; $("#congBox").hidden=!isC; $("#altroBox").hidden=isC; if(isC) drawYears(); };
   const congInfo = ()=>{
     const c = codeById(sel); const box=$("#congInfo");
     if(!c?.scalaCongedo){ box.innerHTML=""; return; }
-    const before = L.at(addDays(ds,-1));
-    let after = dayRec(ds)?.codice===sel ? L.afterDay(ds) : null;
-    if(!after){ after = clone(L.at(ds)); const ks=Object.keys(after).sort(); const k=ks.find(k=>after[k]>0); if(k) after[k]--; }
+    const after = clone(prima); after[congAnno]=(after[congAnno]||0)-1;
     let chk="";
     const rc = rec.residuoCalendario;
     if(rc){ let ok=tot(after)===rc.totale; for(const [k,v] of Object.entries(rc.perAnno||{})) if((after[k]||0)!==v) ok=false;
       chk = `<br>Annotato nel calendario: ${rc.totale} (${bucketsTxt(rc.perAnno)}) — <b class="${ok?"ok":"bad"}">${ok?"coincide":"non coincide"}</b>`; }
     box.innerHTML = `<p class="notice small" style="margin:0">Congedo residuo dopo questa giornata: <b>${tot(after)}</b> (${bucketsTxt(after)})${chk}</p>`;
   };
-  congInfo();
+  { const [py,pmm]=parts(ds); const pp=permessiMese(py,pmm), mine=dayRec(ds)?.permessoMin||0;
+    $("#permInfo").textContent = `${MESI[pmm-1]}: disponibili ${fmtHM(pp.residui+mine)} su ${fmtHM(pp.spettanti)} (si azzerano il 1° del mese)`; }
+  { const sm=semestre(semKey(ds)), mine=dayRec(ds)?.flessibilitaMin||0;
+    $("#flexInfo").textContent = `Scala dallo straordinario. Saldo ${semNome(sm.k).toLowerCase()}: ${fmtHM(sm.saldo+mine)}`; }
+  const detVis=()=>{};
+  congMode(); congInfo(); detVis();
+  $("#congYears").onclick = e=>{ const b=e.target.closest("[data-y]"); if(!b) return; congAnno=b.dataset.y; drawYears(); congInfo(); };
   const close = ()=>{ $("#modal").innerHTML=""; };
   $("#shX").onclick=close; $("#shCancel").onclick=close;
   $("#scrim").onclick = e=>{ if(e.target.id==="scrim") close(); };
   document.addEventListener("keydown", function k(e){ if(e.key==="Escape"){ close(); document.removeEventListener("keydown",k); } });
-  $("#chips").onclick = e=>{ const b=e.target.closest(".chip"); if(!b) return; sel=b.dataset.c; $("#chips").querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed", x===b)); congInfo(); };
+  $("#chips").onclick = e=>{ const b=e.target.closest(".chip"); if(!b) return; const id=b.dataset.c;
+    if(!id) selArr=[];
+    else if(selArr.includes(id)) selArr=selArr.filter(x=>x!==id);
+    else if(codeById(id)?.scalaCongedo) selArr=[id];
+    else selArr=[...selArr.filter(x=>!codeById(x)?.scalaCongedo), id];
+    sel = selArr[0] || "";
+    $("#chips").querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed", x.dataset.c ? selArr.includes(x.dataset.c) : !selArr.length));
+    congMode(); congInfo(); detVis(); };
   const span = (a,b)=>{ if(!a||!b) return null; const [h1,m1]=a.split(":").map(Number),[h2,m2]=b.split(":").map(Number); let d=(h2*60+m2)-(h1*60+m1); if(d<0) d+=1440; return d; };
   const fill = (a,b,H,Mi)=>()=>{ const d=span($(a).value,$(b).value); if(d!=null){ $(H).value=Math.floor(d/60)||""; $(Mi).value=d%60||""; } };
   ["#oDa","#oA"].forEach(s=>$(s).onchange=fill("#oDa","#oA","#oH","#oM"));
   ["#pDa","#pA"].forEach(s=>$(s).onchange=fill("#pDa","#pA","#pH","#pM"));
+  ["#xDa","#xA"].forEach(s=>$(s).onchange=fill("#xDa","#xA","#xH","#xM"));
   $("#shClear").onclick = ()=>{ const y=ds.slice(0,4); delete S.anni[y].giorni[ds]; Store.touch("anno:"+y); close(); render(); toast("Giornata svuotata"); };
   $("#shSave").onclick = ()=>{
     const y=ds.slice(0,4); S.anni[y] ||= {giorni:{}};
     const n = {};
     if(sel) n.codice = sel;
+    if(selArr.length>1) n.codiciExtra = selArr.slice(1);
+    const isCong = !!codeById(sel)?.scalaCongedo;
+    if(isCong){
+      if(congAnno !== fifo() || rec.congedoAnno) n.congedoAnno = congAnno;
+      if((prima[congAnno]||0)<=0) toast(`Attenzione: congedo ${congAnno} esaurito, il residuo va sotto zero`);
+    } else {
     if($("#fTurno").checked) n.turno = "pomeriggio";
-    const det=$("#fDet").value.trim(); if(det){ n.dettaglio=det; const mz=estraiMezzi(det); if(mz.length) n.mezzi=mz; }
+    const det = $("#fDet").value.trim(); if(det){ n.dettaglio=det; const mz=estraiMezzi(det); if(mz.length) n.mezzi=mz; }
     const om=(+$("#oH").value||0)*60+(+$("#oM").value||0); if(om>0) n.straordinarioMin=om;
     if($("#oDa").value && $("#oA").value) n.straordinarioFasce=[{dalle:$("#oDa").value, alle:$("#oA").value}];
     const pm=(+$("#pH").value||0)*60+(+$("#pM").value||0); if(pm>0) n.permessoMin=pm;
     if($("#pDa").value && $("#pA").value) n.permessoFascia={dalle:$("#pDa").value, alle:$("#pA").value};
+    const xm=(+$("#xH").value||0)*60+(+$("#xM").value||0); if(xm>0) n.flessibilitaMin=xm;
+    if($("#xDa").value && $("#xA").value) n.flessibilitaFascia={dalle:$("#xDa").value, alle:$("#xA").value};
+    if(xm>0){ const sm=semestre(semKey(ds)); const disp=sm.saldo+(dayRec(ds)?.flessibilitaMin||0); if(xm>disp) toast(`Attenzione: flessibilità oltre il saldo straordinario (${fmtHM(disp)})`); }
     const note=$("#fNote").value.trim(); if(note) n.note=note;
+    }
     if(rec.residuoCalendario && sel===rec.codice) n.residuoCalendario=rec.residuoCalendario;
     const old = dayRec(ds);
     const strip = o=>{ const c=clone(o||{}); delete c.origine; delete c.modificatoIl; return JSON.stringify(c); };
@@ -690,22 +878,22 @@ function renderReport(){
   const resFine = L.at(fine), resIni = L.at(addDays(da,-1) < S.config.dataInizio ? S.config.dataInizio : addDays(da,-1));
   const accrIn = Object.entries(S.config.parametri).filter(([y,p])=>+y>+S.config.dataInizio.slice(0,4) && ymd(+y,1,1)>=da && ymd(+y,1,1)<=a).reduce((s,[y,p])=>s+(+p.congedoSpettante||0),0);
   // permessi: disponibilità degli anni coinvolti
-  const yIn=[]; for(let y=+da.slice(0,4); y<=+a.slice(0,4); y++) yIn.push(y);
-  const permDisp = yIn.reduce((s,y)=>s+(+(S.config.parametri[y]?.permessiOre||0))*60,0);
-  const permUsatiAnni = yIn.reduce((s,y)=>s+stats(ymd(y,1,1),ymd(y,12,31)).permessoMin,0);
+  const PP = permessiPeriodo(da,a);
+  const curY=+oggi.slice(0,4), curM=+oggi.slice(5,7);
+  const pCur = (ymd(curY,curM,1)<=a && oggi>=da) ? permessiMese(curY,curM) : null;
   const periodo = R.tipo==="anno" ? `Anno ${R.anno}` : R.tipo==="mese" ? `${MESI[R.mese-1]} ${R.anno}` : `Dal ${fmtDate(da)} al ${fmtDate(a)}`;
 
   let h = `<div class="card" style="margin-bottom:14px;padding:12px"><div class="row">
-    <div class="row" role="group" aria-label="Periodo">${["anno","mese","intervallo"].map(t=>`<button class="btn sm ${R.tipo===t?"primary":""}" data-rt="${t}">${t[0].toUpperCase()+t.slice(1)}</button>`).join("")}</div>
-    ${R.tipo!=="intervallo"?`<select id="rAnno" aria-label="Anno">${ys.map(y=>`<option ${y===R.anno?"selected":""}>${y}</option>`).join("")}</select>`:""}
+    <div class="row" role="group" aria-label="Periodo">${["mese","anno","intervallo"].map(t=>`<button class="btn sm ${R.tipo===t?"primary":""}" data-rt="${t}">${t[0].toUpperCase()+t.slice(1)}</button>`).join("")}</div>
     ${R.tipo==="mese"?`<select id="rMese" aria-label="Mese">${MESI.map((n,i)=>`<option value="${i+1}" ${i+1===R.mese?"selected":""}>${n}</option>`).join("")}</select>`:""}
+    ${R.tipo!=="intervallo"?`<select id="rAnno" aria-label="Anno">${ys.map(y=>`<option ${y===R.anno?"selected":""}>${y}</option>`).join("")}</select>`:""}
     ${R.tipo==="intervallo"?`<label class="small">dal <input type="date" id="rDa" value="${esc(R.da||S.config.dataInizio)}" min="${S.config.dataInizio}"></label><label class="small">al <input type="date" id="rA" value="${esc(R.a||oggi)}"></label>`:""}
   </div><p class="small muted" style="margin:8px 0 0">${esc(periodo)} · dati dal ${fmtDate(da)} al ${fmtDate(a)}${a>oggi?" (giorni futuri esclusi dai conteggi automatici)":""}</p></div>`;
 
   h += `<div class="tiles" style="margin-bottom:14px">
     <div class="tile"><span>Giornate lavorate</span><b>${st.lavorate}</b><small>di cui ${st.trasferte} in trasferta</small></div>
-    <div class="tile"><span>Straordinari</span><b>${fmtHM(st.straordMin)}</b><small>${st.straordGiorni.length} giornate</small></div>
-    <div class="tile"><span>Congedo usato</span><b>${st.congedo}</b><small>residuo ${tot(resFine)} gg</small></div>
+    <div class="tile"><span>Straordinari</span><b>${fmtHM(st.straordMin)}</b><small>saldo semestre in corso ${fmtHM(semestre(semKey(oggi)).saldo)}</small></div>
+    <div class="tile"><span>Congedo usato</span><b>${st.congedo}</b><small>residuo ${tot(resFine)} giorni</small></div>
     <div class="tile"><span>Turni pomeridiani</span><b>${st.turniPomLav}</b><small>lavorati su ${st.turniPom} in calendario</small></div>
   </div>`;
 
@@ -720,10 +908,16 @@ function renderReport(){
   </section>`;
   // Straordinari
   h += `<section class="card"><h2>Straordinari</h2>
-    <dl class="kv"><dt>Totale nel periodo</dt><dd>${fmtOre(st.straordMin)}</dd><dt>Giornate con straordinario</dt><dd>${st.straordGiorni.length}</dd></dl>
+    <dl class="kv"><dt>Maturato nel periodo</dt><dd>${fmtHM(st.straordMin)}</dd><dt>Giornate con straordinario</dt><dd>${st.straordGiorni.length}</dd>
+      <dt>Flessibilità usata</dt><dd>${fmtHM(st.flexMin)}</dd><dt>Giornate di flessibilità</dt><dd>${st.flexGiorni.length}</dd></dl>
+    <p class="small muted" style="margin:10px 0 6px">Saldo per semestre = straordinario maturato meno flessibilità usata. Il 1° gennaio e il 1° luglio il conteggio riparte da zero; lo storico dei semestri chiusi resta qui.</p>
+    <div class="semlist">${semestriTra(da,a).map(k=>{const x=semestre(k);return `<div class="sem"><div class="row" style="justify-content:space-between"><b>${x.nome}</b><span class="pill" style="--c:${x.chiuso?"var(--muted)":"var(--good)"}">${x.chiuso?"chiuso":"in corso"}</span></div>
+      <dl class="kv"><dt>Maturato</dt><dd>${fmtHM(x.maturato)}</dd><dt>Flessibilità usata</dt><dd>${fmtHM(x.flex)}</dd><dt>${x.chiuso?"Saldo a fine semestre":"Saldo disponibile"}</dt><dd class="${x.saldo<0?"bad":""}">${fmtHM(x.saldo)}</dd></dl></div>`}).join("")}</div>
     ${mk.length>1&&st.straordMin?barChart(mk.map(k=>({l:MESI3[+k.slice(5)-1]+(mk.length>12?" "+k.slice(2,4):""), v:st.mesi[k].straordMin/60, lab:st.mesi[k].straordMin?fmtHM(st.mesi[k].straordMin):"", t:`${MESI[+k.slice(5)-1]} ${k.slice(0,4)}: ${fmtOre(st.mesi[k].straordMin)}`})),"ore"):""}
     ${st.straordGiorni.length?`<details style="margin-top:10px"><summary class="small" style="cursor:pointer">Giornate che hanno generato straordinario</summary><div class="tscroll"><table><tr><th>Data</th><th>Attività</th><th class="n">Ore</th></tr>
       ${st.straordGiorni.map(ds=>{const r=dayRec(ds);return `<tr><td>${fmtDate(ds)}</td><td>${esc(r.dettaglio||"")}</td><td class="n">${fmtHM(r.straordinarioMin)}</td></tr>`}).join("")}</table></div></details>`:""}
+    ${st.flexGiorni.length?`<details style="margin-top:6px"><summary class="small" style="cursor:pointer">Giornate con flessibilità</summary><div class="tscroll"><table><tr><th>Data</th><th>Attività</th><th class="n">Ore</th></tr>
+      ${st.flexGiorni.map(ds=>{const r=dayRec(ds);return `<tr><td>${fmtDate(ds)}</td><td>${esc(r.dettaglio||"")}</td><td class="n">${fmtHM(r.flessibilitaMin)}</td></tr>`}).join("")}</table></div></details>`:""}
   </section>`;
   // Congedo
   h += `<section class="card"><h2>Congedo (ferie)</h2>
@@ -737,17 +931,21 @@ function renderReport(){
   </section>`;
   // Permessi e assenze
   h += `<section class="card"><h2>Permessi e altre voci</h2>
-    <dl class="kv"><dt>Permessi disponibili ${yIn.join("–")}</dt><dd>${fmtHM(permDisp)}</dd><dt>Permessi usati nel periodo</dt><dd>${fmtHM(st.permessoMin)}</dd><dt>Permessi residui</dt><dd>${fmtHM(permDisp-permUsatiAnni)}</dd>
-    <dt>Malattia</dt><dd>${st.malattia} gg</dd><dt>Riposi</dt><dd>${st.riposi} gg</dd><dt>Festività</dt><dd>${st.festivi} gg</dd><dt>Turni pomeridiani in calendario</dt><dd>${st.turniPom}</dd>
+    <dl class="kv">${R.tipo!=="anno"?`<dt>Permessi spettanti al mese</dt><dd>${fmtOre(permOreMese(+a.slice(0,4))*60)}</dd>`:""}
+    <dt>${R.tipo==="anno"?"Permessi spettanti":`Spettanti nel periodo (${PP.mesi} ${PP.mesi===1?"mese":"mesi"})`}</dt><dd>${fmtHM(PP.spettanti)}</dd>
+    <dt>Usati nel periodo</dt><dd>${fmtHM(PP.usati)}</dd>
+    ${pCur && R.tipo!=="anno"?`<dt>Ancora disponibili a ${MESI[curM-1].toLowerCase()}</dt><dd>${fmtHM(pCur.residui)}</dd>`:""}
+    <dt>Non usati e azzerati</dt><dd>${fmtHM(PP.persi)}</dd>
+    <dt>Malattia</dt><dd>${st.malattia} giorni</dd><dt>Riposi</dt><dd>${st.riposi} giorni</dd><dt>Festività</dt><dd>${st.festivi} giorni</dd><dt>Turni pomeridiani in calendario</dt><dd>${st.turniPom}</dd>
     <dt>Giorni senza registrazione</dt><dd class="${st.vuoti.length?"warn":""}">${st.vuoti.length}</dd></dl>
-    ${st.vuoti.length?`<p class="small muted" style="margin:8px 0 0">${st.vuoti.map(fmtDate).join(", ")}</p>`:""}
+    ${st.vuoti.length?`<p class="small muted" style="margin:8px 0 0">${st.vuoti.map(d=>fmtDate(d)).join(", ")}</p>`:""}
   </section>`;
   h += `</div>`;
   // Andamento mensile
   if(mk.length>1) h += `<section class="card" style="margin-top:14px"><h2>Andamento mensile</h2><div class="tscroll"><table>
-    <tr><th>Mese</th><th class="n">Lavorate</th><th class="n">Trasferte</th><th class="n">Congedo</th><th class="n">Malattia</th><th class="n">Straord.</th><th class="n">Permessi</th><th class="n">Turni pom.</th></tr>
-    ${mk.map(k=>{const M=st.mesi[k];return `<tr><td>${MESI[+k.slice(5)-1]} ${k.slice(0,4)}</td><td class="n">${M.lavorate}</td><td class="n">${M.trasferte}</td><td class="n">${M.congedo}</td><td class="n">${M.malattia}</td><td class="n">${fmtHM(M.straordMin)}</td><td class="n">${fmtHM(M.permessoMin)}</td><td class="n">${M.turniPom}</td></tr>`}).join("")}
-    <tr><th>Totale</th><th class="n">${st.lavorate}</th><th class="n">${st.trasferte}</th><th class="n">${st.congedo}</th><th class="n">${st.malattia}</th><th class="n">${fmtHM(st.straordMin)}</th><th class="n">${fmtHM(st.permessoMin)}</th><th class="n">${st.turniPom}</th></tr>
+    <tr><th>Mese</th><th class="n">Lavorate</th><th class="n">Trasferte</th><th class="n">Congedo</th><th class="n">Malattia</th><th class="n">Straord.</th><th class="n">Flessib.</th><th class="n">Permessi</th><th class="n">Turni pom.</th></tr>
+    ${mk.map(k=>{const M=st.mesi[k];return `<tr><td>${MESI[+k.slice(5)-1]} ${k.slice(0,4)}</td><td class="n">${M.lavorate}</td><td class="n">${M.trasferte}</td><td class="n">${M.congedo}</td><td class="n">${M.malattia}</td><td class="n">${fmtHM(M.straordMin)}</td><td class="n">${fmtHM(M.flexMin)}</td><td class="n">${fmtHM(M.permessoMin)} / ${fmtHM(permessiMese(+k.slice(0,4),+k.slice(5,7)).spettanti)}</td><td class="n">${M.turniPom}</td></tr>`}).join("")}
+    <tr><th>Totale</th><th class="n">${st.lavorate}</th><th class="n">${st.trasferte}</th><th class="n">${st.congedo}</th><th class="n">${st.malattia}</th><th class="n">${fmtHM(st.straordMin)}</th><th class="n">${fmtHM(st.flexMin)}</th><th class="n">${fmtHM(st.permessoMin)}</th><th class="n">${st.turniPom}</th></tr>
   </table></div></section>`;
   // Mezzi
   const mz = Object.entries(st.mezzi).sort((x,y)=>y[1]-x[1]);
@@ -817,7 +1015,7 @@ function setCodici(){
       <td><button class="btn sm danger" data-del="${i}" ${u[c.id]?"disabled title=\"Già usato: disattivalo invece di eliminarlo\"":""}>Elimina</button></td></tr>`).join("")}
     </table></div>
     <div class="row" style="margin-top:12px"><input type="text" id="newCode" placeholder="Nome del nuovo codice" class="grow" style="max-width:260px"><select id="newCat">${cats.map(k=>`<option>${esc(k)}</option>`).join("")}</select><button class="btn primary" id="addCode">Aggiungi codice</button></div>
-    <p class="small muted" style="margin:10px 0 0">Valore: quantità facoltativa associata al codice (ad esempio ore). Turno pomeridiano, straordinario e permesso si registrano dentro la giornata.</p></div>`;
+    <p class="small muted" style="margin:10px 0 0">Valore: quantità facoltativa associata al codice (ad esempio ore). Turno pomeridiano, straordinario, flessibilità e permesso si registrano dentro la giornata.</p></div>`;
   $("#setBody").querySelectorAll("tr[data-i] [data-k]").forEach(inp=>inp.onchange=()=>{
     const c = S.config.codici[+inp.closest("tr").dataset.i], k=inp.dataset.k;
     if(inp.type==="checkbox") c[k]=inp.checked;
@@ -847,19 +1045,19 @@ function setAnni(){
     <p class="small muted" style="margin:0 0 10px">Il calendario del nuovo anno viene creato con i giorni e le settimane corrette. Le presenze dell'anno precedente non vengono copiate; i residui di congedo e permessi passano da soli all'anno nuovo.</p>
     <div class="row"><label class="f">Anno<input type="number" id="nyY" value="${next}" style="width:100px"></label>
     <label class="f">Congedo spettante (giorni)<input type="number" id="nySp" value="${esc(prevSp)}" min="0" style="width:130px"></label>
-    <label class="f">Permessi disponibili (ore)<input type="number" id="nyP" value="0" min="0" step="0.5" style="width:130px"></label>
+    <label class="f">Permessi al mese (ore)<input type="number" id="nyP" value="${permOreMese(next-1)}" min="0" step="0.5" style="width:130px"></label>
     <button class="btn primary" id="addYear" style="align-self:flex-end">Crea anno</button></div>
     <p class="small muted" style="margin:8px 0 0">Il congedo spettante è precompilato con il valore dell'anno prima: controllalo con la tua busta paga prima di confermare.</p></div>`;
   $("#setBody").querySelectorAll("[data-arch]").forEach(b=>b.onclick=()=>{ const y=+b.dataset.arch, A=S.config.anniArchiviati; const i=A.indexOf(y); if(i>=0) A.splice(i,1); else A.push(y); Store.touch("config"); setAnni(); });
   $("#addYear").onclick=()=>{ const y=+$("#nyY").value; if(!(y>=2000&&y<=2100)){ toast("Inserisci un anno valido"); return; }
     if(S.anni[y]){ toast(`L'anno ${y} esiste già`); return; }
     if(ymd(y,12,31)<S.config.dataInizio){ toast("Il registro inizia il "+fmtDate(S.config.dataInizio)); return; }
-    S.anni[y]={giorni:{}}; S.config.parametri[y]={congedoSpettante:+$("#nySp").value||0, permessiOre:+$("#nyP").value||0, note:""};
+    S.anni[y]={giorni:{}}; S.config.parametri[y]={congedoSpettante:+$("#nySp").value||0, permessiMensiliOre:+$("#nyP").value||0, note:""};
     Store.touch("anno:"+y); Store.touch("config"); setAnni(); toast(`Anno ${y} creato`); };
 }
 function setParametri(){
   const ys=yearsList(true); UI.parY ||= +todayStr().slice(0,4); if(!ys.includes(UI.parY)) UI.parY=ys[ys.length-1];
-  const y=UI.parY, p = S.config.parametri[y] ||= {congedoSpettante:0, permessiOre:0, note:""};
+  const y=UI.parY, p = S.config.parametri[y] ||= {congedoSpettante:0, permessiMensiliOre:4, note:""};
   const L=congedoLedger(), sy=+S.config.dataInizio.slice(0,4);
   const ini = L.yearStart[y]||{};
   const st = stats(ymd(y,1,1), ymd(y,12,31));
@@ -869,7 +1067,7 @@ function setParametri(){
     <select id="parY" aria-label="Anno">${ys.map(v=>`<option ${v===y?"selected":""}>${v}</option>`).join("")}</select></div>
     <div class="row" style="align-items:flex-end">
       <label class="f">Congedo spettante ${y} (giorni)<input type="number" id="pSp" value="${p.congedoSpettante??0}" min="0" style="width:150px"></label>
-      <label class="f">Permessi disponibili ${y} (ore)<input type="number" id="pPe" value="${p.permessiOre??0}" min="0" step="0.5" style="width:150px"></label>
+      <label class="f">Permessi al mese ${y} (ore)<input type="number" id="pPe" value="${p.permessiMensiliOre??4}" min="0" step="0.5" style="width:150px"></label>
     </div>
     <label class="f" style="margin-top:10px">Note<input type="text" id="pNo" value="${esc(p.note||"")}"></label>
     <p class="small muted" style="margin:10px 0 0">${y===sy?`Nel ${y} il registro parte dal ${fmtDate(S.config.dataInizio)}: il congedo disponibile a quella data è nei residui di avvio qui sotto.`:`Il congedo spettante viene accreditato il 1° gennaio ${y} e si somma ai residui degli anni precedenti.`}</p></div>
@@ -877,7 +1075,7 @@ function setParametri(){
     <dt>Congedo disponibile a inizio ${y===sy?"registro":"anno"}</dt><dd>${tot(ini)} <span class="small muted">(${bucketsTxt(ini)})</span></dd>
     <dt>Congedo usato nel ${y}</dt><dd>${st.congedo}</dd>
     <dt>Congedo residuo ${todayStr()<ymd(y,12,31)?"oggi":"a fine anno"}</dt><dd>${tot(resOggi)} <span class="small muted">(${bucketsTxt(resOggi)})</span></dd>
-    <dt>Permessi usati / residui</dt><dd>${fmtHM(st.permessoMin)} / ${fmtHM((+p.permessiOre||0)*60-st.permessoMin)}</dd>
+    ${(()=>{const pp=permessiPeriodo(ymd(y,1,1),ymd(y,12,31));return `<dt>Permessi usati nel ${y}</dt><dd>${fmtHM(pp.usati)}</dd><dt>Permessi non usati e azzerati</dt><dd>${fmtHM(pp.persi)}</dd>`})()}
     <dt>Straordinari ${y}</dt><dd>${fmtHM(st.straordMin)}</dd></dl>
     <p class="small muted" style="margin:10px 0 0">Questi valori non si modificano a mano: derivano dalle giornate e dai parametri.</p></div>
   <div class="card"><h2>Residui di congedo all'avvio del registro</h2>
@@ -887,7 +1085,7 @@ function setParametri(){
   $("#parY").onchange=e=>{ UI.parY=+e.target.value; setParametri(); };
   const upd=(k,v)=>{ p[k]=v; Store.touch("config"); setParametri(); toast("Parametri aggiornati"); };
   $("#pSp").onchange=e=>upd("congedoSpettante", +e.target.value||0);
-  $("#pPe").onchange=e=>upd("permessiOre", +e.target.value||0);
+  $("#pPe").onchange=e=>upd("permessiMensiliOre", +e.target.value||0);
   $("#pNo").onchange=e=>{ p.note=e.target.value; Store.touch("config"); };
   $("#setBody").querySelectorAll("[data-av]").forEach(i=>i.onchange=()=>{ const v=+i.value||0; if(v===0) delete S.config.congedoAvvio[i.dataset.av]; else S.config.congedoAvvio[i.dataset.av]=v; Store.touch("config"); setParametri(); });
   $("#avNew").onchange=e=>{ const k=String(+e.target.value); if(+k>1990 && !(k in S.config.congedoAvvio)){ S.config.congedoAvvio[k]=0; setParametri(); } };
@@ -940,10 +1138,11 @@ function loadXLSX(){ return xlsxP ||= new Promise((res,rej)=>{ if(window.XLSX) r
 function giornateRows(){
   const out=[]; const ys=Object.keys(S.anni).sort();
   for(const y of ys) for(const ds of Object.keys(S.anni[y].giorni).sort()){
-    const r=S.anni[y].giorni[ds], c=codeById(r.codice);
-    out.push({ Data:fmtDate(ds), Giorno:GIORNI[dow(ds)], Codice:c?c.nome:(r.codice||""), Categoria:c?c.categoria:"",
+    const r=S.anni[y].giorni[ds], cs=codesOf(r).map(id=>codeById(id)||{nome:id,categoria:""});
+    out.push({ Data:fmtDate(ds), Giorno:GIORNI[dow(ds)], Codice:cs.map(c=>c.nome).join(" + "), Categoria:[...new Set(cs.map(c=>c.categoria))].join(" + "),
       "Turno pomeridiano":r.turno?"Sì":"", "Straordinario (h:mm)":r.straordinarioMin?fmtHM(r.straordinarioMin):"", "Straordinario (min)":r.straordinarioMin||"",
-      "Permesso (h:mm)":r.permessoMin?fmtHM(r.permessoMin):"", "Permesso (min)":r.permessoMin||"", Attività:r.dettaglio||"", Mezzi:(r.mezzi||[]).join(", "), Note:r.note||"", Origine:r.origine||"" });
+      "Permesso (h:mm)":r.permessoMin?fmtHM(r.permessoMin):"", "Permesso (min)":r.permessoMin||"",
+      "Flessibilità (h:mm)":r.flessibilitaMin?fmtHM(r.flessibilitaMin):"", "Flessibilità (min)":r.flessibilitaMin||"", Attività:r.dettaglio||"", Mezzi:(r.mezzi||[]).join(", "), Note:r.note||"", Origine:r.origine||"" });
   }
   return out;
 }
@@ -959,21 +1158,21 @@ async function exportXLSX(){
   const L=congedoLedger();
   // Riepilogo mensile
   const rie=[]; for(const y of yearsList(true)) for(let m=1;m<=12;m++){ const a=ymd(y,m,1), b=ymd(y,m,dim(y,m)); if(b<S.config.dataInizio) continue; const st=stats(a,b); if(a>todayStr() && !st.registrate) continue;
-    rie.push({Anno:y, Mese:MESI[m-1], "Giornate lavorate":st.lavorate, Trasferte:st.trasferte, Congedo:st.congedo, Malattia:st.malattia, "Straordinario (h:mm)":fmtHM(st.straordMin), "Permessi (h:mm)":fmtHM(st.permessoMin), "Turni pomeridiani":st.turniPom, "Congedo residuo a fine mese":tot(L.at(b<todayStr()?b:todayStr()))}); }
+    rie.push({Anno:y, Mese:MESI[m-1], "Giornate lavorate":st.lavorate, Trasferte:st.trasferte, Congedo:st.congedo, Malattia:st.malattia, "Straordinario (h:mm)":fmtHM(st.straordMin), "Flessibilità (h:mm)":fmtHM(st.flexMin), "Saldo straordinario semestre":fmtHM(semestre(semKey(b)).saldo), "Permessi (h:mm)":fmtHM(st.permessoMin), "Turni pomeridiani":st.turniPom, "Congedo residuo a fine mese":tot(L.at(b<todayStr()?b:todayStr()))}); }
   X.utils.book_append_sheet(wb, X.utils.json_to_sheet(rie), "Riepilogo mensile");
   // Griglia per anno, come il registro cartaceo
   for(const y of yearsList(true)){
     const aoa=[[`REGISTRO PRESENZE ${y}`],[],["Mese",...Array.from({length:31},(_,i)=>i+1)]];
     for(let m=1;m<=12;m++){ const row=[MESI[m-1]], row2=["  turno / straord."];
       for(let d=1;d<=31;d++){ if(d>dim(y,m)){row.push("");row2.push("");continue;} const ds=ymd(y,m,d); const ec=effCode(ds); const r=dayRec(ds)||{};
-        row.push(ds<S.config.dataInizio?"":ec?(codeById(ec.id)?.nome||ec.id):""); row2.push([r.turno?"POM":"", r.straordinarioMin?"+"+fmtHM(r.straordinarioMin):""].filter(Boolean).join(" ")); }
+        row.push(ds<S.config.dataInizio?"":ec?(ec.auto?[ec.id]:codesOf(r)).map(id=>codeById(id)?.nome||id).join(" + "):""); row2.push([r.turno?"POM":"", r.straordinarioMin?"+"+fmtHM(r.straordinarioMin):""].filter(Boolean).join(" ")); }
       aoa.push(row,row2); }
     const ws=X.utils.aoa_to_sheet(aoa); ws["!cols"]=[{wch:16},...Array(31).fill({wch:11})];
     X.utils.book_append_sheet(wb, ws, `Registro ${y}`);
   }
   X.utils.book_append_sheet(wb, X.utils.json_to_sheet(giornateRows()), "Giornate");
   X.utils.book_append_sheet(wb, X.utils.json_to_sheet(S.config.codici.map(c=>({Codice:c.id, Nome:c.nome, Sigla:c.sigla||"", Categoria:c.categoria, Colore:c.colore, Lavorativo:c.lavorativo?"Sì":"No", "Scala congedo":c.scalaCongedo?"Sì":"No", Valore:c.valore??"", Attivo:c.attivo?"Sì":"No"}))), "Codici");
-  X.utils.book_append_sheet(wb, X.utils.json_to_sheet(Object.entries(S.config.parametri).sort().map(([y,p])=>({Anno:+y, "Congedo spettante":p.congedoSpettante||0, "Permessi disponibili (ore)":p.permessiOre||0, Note:p.note||""}))), "Parametri");
+  X.utils.book_append_sheet(wb, X.utils.json_to_sheet(Object.entries(S.config.parametri).sort().map(([y,p])=>({Anno:+y, "Congedo spettante":p.congedoSpettante||0, "Permessi al mese (ore)":p.permessiMensiliOre??4, Note:p.note||""}))), "Parametri");
   const buf = X.write(wb,{bookType:"xlsx",type:"array"});
   if(await saveFile(`registro-presenze-${stamp()}.xlsx`, new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")){ S.meta.ultimaEsportazione=new Date().toISOString(); Store.touch("config"); toast("Excel esportato"); }
 }
@@ -992,10 +1191,11 @@ async function analyzeExcel(file){
   if(wb.Sheets["Giornate"]){ // formato esportato dall'app
     for(const r of X.utils.sheet_to_json(wb.Sheets["Giornate"],{defval:""})){
       const ds=parseDateCell(r.Data,X); if(!ds) continue; const n={};
-      if(r.Codice){ const c=findCode(r.Codice); if(c) n.codice=c.id; else { unknown[r.Codice]=(unknown[r.Codice]||0)+1; n._ignoto=String(r.Codice); } }
+      if(r.Codice){ for(const part of String(r.Codice).split("+").map(x=>x.trim()).filter(Boolean)){ const c=findCode(part); if(c){ if(!n.codice) n.codice=c.id; else (n.codiciExtra ||= []).push(c.id); } else { unknown[part]=(unknown[part]||0)+1; n._ignoto ||= part; } } }
       if(String(r["Turno pomeridiano"]).toLowerCase().startsWith("s")) n.turno="pomeriggio";
       const om=hmToMin(r["Straordinario (min)"]!==""?r["Straordinario (min)"]:r["Straordinario (h:mm)"]); if(om) n.straordinarioMin=om;
       const pm=hmToMin(r["Permesso (min)"]!==""?r["Permesso (min)"]:r["Permesso (h:mm)"]); if(pm) n.permessoMin=pm;
+      const fx=hmToMin((r["Flessibilità (min)"]??"")!==""?r["Flessibilità (min)"]:(r["Flessibilità (h:mm)"]??"")); if(fx) n.flessibilitaMin=fx;
       if(r["Attività"]){ n.dettaglio=String(r["Attività"]); const mz=estraiMezzi(n.dettaglio); if(mz.length) n.mezzi=mz; }
       if(r.Note) n.note=String(r.Note);
       n.origine="importato da Excel"; recs[ds]=n; years.add(ds.slice(0,4));
@@ -1046,7 +1246,7 @@ function setExcel(){
       if(mk) for(const [name] of unk){ if(!findCode(name)){ let id=slug(name),i=2; while(codeById(id)) id=slug(name)+"_"+i++; S.config.codici.push({id,nome:name,categoria:"Altro",colore:"#6E7F91",lavorativo:false,attivo:true}); } }
       for(const [ds,n0] of Object.entries(A.recs)){ if(ds<S.config.dataInizio) continue; const n=clone(n0);
         if(n._ignoto){ const c=mk?findCode(n._ignoto):null; if(c) n.codice=c.id; delete n._ignoto; }
-        const y=ds.slice(0,4); S.anni[y] ||= {giorni:{}}; S.config.parametri[y] ||= {congedoSpettante:0,permessiOre:0,note:""};
+        const y=ds.slice(0,4); S.anni[y] ||= {giorni:{}}; S.config.parametri[y] ||= {congedoSpettante:0,permessiMensiliOre:4,note:""};
         const o=S.anni[y].giorni[ds]; if(o&&o.codice&&!over){ if(!Object.keys(n).some(key=>key!=="origine"&&key!=="codice"&&!o[key])) continue; S.anni[y].giorni[ds]={...n,...o}; }
         else S.anni[y].giorni[ds]= o? {...o,...n} : n;
         Store.touch("anno:"+y); k++; }
@@ -1121,10 +1321,12 @@ function setReset(){
 }
 
 /* ============================ avvio ============================ */
+document.documentElement.lang ||= "it";
 (async function boot(){
   const h = location.hash.slice(1); if(["calendario","report","impostazioni"].includes(h)) UI.tab=h;
   try{ await Store.init(); }catch(e){ S=null; Store.setStatus("err","Impossibile leggere i dati: ricarica la pagina."); }
   Store.setStatus(Store.status);
+  if(S && _migrato){ _migrato=false; Store.touch("config"); for(const y of Object.keys(S.anni)) Store.touch("anno:"+y); }
   render();
 })();
 addEventListener("hashchange", ()=>{ const h=location.hash.slice(1); if(["calendario","report","impostazioni"].includes(h) && h!==UI.tab){ UI.tab=h; render(); } });

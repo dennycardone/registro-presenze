@@ -149,6 +149,16 @@ td.n,th.n{text-align:right}
   .card{padding:12px}
 }
 .legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+body.calmode .wrap{padding-bottom:calc(var(--nav-h) + 4px + env(safe-area-inset-bottom,0px))}
+@media (min-width:900px){html:not(.phone) body.calmode .wrap{padding-bottom:12px}}
+body.calmode .calcard{padding-bottom:6px;margin-bottom:0}
+body.calmode .months{margin-bottom:6px}
+body.calmode .filtrobar{margin-bottom:6px}
+body.calmode .monthhead{margin-bottom:6px}
+body.calmode .wd{height:20px;line-height:16px;padding:2px 0}
+.grid.compact .day .det{display:none}
+.grid.compact .day .num{font-size:14px}
+.grid.compact .day{padding-top:2px;padding-bottom:2px}
 
 /* sheet */
 .scrim{position:fixed;left:0;top:0;width:100%;height:var(--appvh,100vh);background:rgb(10 16 22 / .45);z-index:40;display:flex;align-items:flex-end;justify-content:center}
@@ -265,6 +275,7 @@ html.phone .setnav button[aria-current="true"]{background:var(--ink);color:var(-
     fit(); addEventListener("resize",fit); addEventListener("orientationchange",()=>setTimeout(fit,300));
   }
 })();
+if(!document.documentElement.classList.contains("phone")){ const setVh=()=>document.documentElement.style.setProperty("--appvh", innerHeight+"px"); setVh(); addEventListener("resize",setVh); }
 /* ============================ utilità ============================ */
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -588,6 +599,7 @@ function applyTheme(){
   if(t==="light"||t==="dark") document.documentElement.dataset.userTheme="1";
 }
 function render(){
+  document.body.classList.toggle("calmode", UI.tab==="calendario");
   document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-current", b.dataset.tab===UI.tab?"page":"false"));
   if(!S){ $("#view").innerHTML = emptyState(); return; }
   applyTheme();
@@ -677,10 +689,7 @@ function renderCal(){
     </button>`;
   }
   h += `</div>`;
-  const used = new Set(); for(let d=1; d<=dim(y,m); d++){ const ds2=ymd(y,m,d), ec=effCode(ds2); if(ec){ used.add(ec.id); if(!ec.auto) codesOf(dayRec(ds2)).forEach(id=>used.add(id)); } }
-  h += `<div class="legend">${[...used].map(id=>{const c=codeById(id); return c?`<span class="pill" style="--c:${esc(c.colore)}"><span class="dot"></span>${esc(c.nome)}</span>`:""}).join("")}
-    <span class="pill"><span class="tag pm" style="margin:0">POM</span>turno pomeridiano</span>
-</div></div>`;
+  h += `</div>`;
   $("#view").innerHTML = h;
 
   $("#yearSel").onchange = e=>{ if(!e.target.value) return; UI.year=+e.target.value; UI.month=null; renderCal(); };
@@ -694,7 +703,24 @@ function renderCal(){
   document.querySelectorAll(".months button").forEach(b=>b.onclick=()=>{ UI.month=+b.dataset.m; renderCal(); });
   { const bar=$(".months"), cur=bar.querySelector('[aria-pressed="true"]'); if(cur) bar.scrollLeft = cur.offsetLeft - bar.offsetLeft - (bar.clientWidth - cur.offsetWidth)/2; }
   document.querySelectorAll(".day[data-day]").forEach(b=>b.onclick=()=>openDay(b.dataset.day));
+  sizeGrid();
   fitCodes();
+}
+/** Dimensiona le righe del calendario perché tutto il mese stia nello schermo, senza scorrere. */
+function sizeGrid(){
+  const g=$(".grid"); if(!g) return;
+  const top = el=>{ let t=0; while(el){ t+=el.offsetTop; el=el.offsetParent; } return t; };
+  const cs = el=>getComputedStyle(el);
+  const vh = parseFloat(cs(document.documentElement).getPropertyValue("--appvh")) || innerHeight;
+  const wrap=$(".wrap"), card=g.closest(".calcard");
+  const below = parseFloat(cs(wrap).paddingBottom) + (card?parseFloat(cs(card).paddingBottom)+1:0) + 2;
+  const weeks = Math.ceil(g.querySelectorAll(".day").length/7);
+  const wdH = 20, gap = parseFloat(cs(g).rowGap)||2;
+  const avail = vh - top(g) - below - wdH - gap*weeks;
+  const rowH = Math.max(44, Math.floor(avail/weeks));
+  g.style.gridTemplateRows = `${wdH}px repeat(${weeks}, ${rowH}px)`;
+  g.classList.toggle("compact", rowH<62);
+  g.querySelectorAll(".day").forEach(d=>{ d.style.minHeight="0"; d.style.height=rowH+"px"; });
 }
 /** Adatta il nome del codice alla cella: rimpicciolisce il testo finché ogni parola sta nella casella. */
 function fitCodes(){
@@ -705,7 +731,7 @@ function fitCodes(){
     if(el.scrollWidth>el.clientWidth+0.5) el.style.overflowWrap="anywhere";
   });
 }
-addEventListener("resize",()=>{ if(UI.tab==="calendario" && S) fitCodes(); });
+addEventListener("resize",()=>{ if(UI.tab==="calendario" && S){ sizeGrid(); fitCodes(); } });
 function matchFiltro(ds, rec, ec, c){
   const f=UI.filtro, v=f.slice(2);
   const ids = ec ? (ec.auto ? [ec.id] : codesOf(rec)) : [];
